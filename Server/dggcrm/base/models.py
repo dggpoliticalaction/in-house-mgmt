@@ -33,6 +33,25 @@ class Group(models.Model):
 
     def __str__(self):
         return self.name
+    
+class VolunteerResponse(models.Model):
+    """
+    Tracks volunteer responses to reaches.
+    """
+    id = models.AutoField(primary_key=True)
+    did = models.CharField(max_length=255)
+    rid = models.IntegerField()
+    response = models.IntegerField(choices=[
+        (1, 'Accepted'),
+        (0, 'Declined'),
+    ])
+
+    class Meta:
+        db_table = 'VolunteerResponses'
+        unique_together = ('did', 'rid')
+
+    def __str__(self):
+        return self.did
 
 
 class VolunteerInGroup(models.Model):
@@ -188,26 +207,4 @@ class Reach(models.Model):
         return self.title
 
 
-class VolunteerResponse(models.Model):
-    """
-    Tracks volunteer responses to reaches.
-    Response: 1 = accepted, 2 = rejected
-    """
-    reach = models.ForeignKey(Reach, on_delete=models.CASCADE, db_column='rid')
-    person = models.ForeignKey(Person, on_delete=models.CASCADE, db_column='did')
-    response = models.IntegerField()
 
-    RESPONSE_ACCEPTED = 1
-    RESPONSE_REJECTED = 2
-    RESPONSE_CHOICES = [
-        (RESPONSE_ACCEPTED, 'Accepted'),
-        (RESPONSE_REJECTED, 'Rejected'),
-    ]
-
-    class Meta:
-        db_table = 'VolunteerResponses'
-        verbose_name = 'Volunteer Response'
-        verbose_name_plural = 'Volunteer Responses'
-
-    def __str__(self):
-        return f"{self.person.name} - {self.reach.title} ({'Accepted' if self.response == 1 else 'Rejected'})"

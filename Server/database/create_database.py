@@ -57,6 +57,7 @@ def create_database():
               priority INTEGER NOT NULL,
               FOREIGN KEY (assigned) REFERENCES People(did))''') # type = asset, sof_dev, ally-reach
     c.execute('''CREATE TABLE IF NOT EXISTS VolunteerResponses(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
               rid INTEGER NOT NULL,
               did TEXT NOT NULL,
               response INT NOT NULL,
@@ -175,7 +176,7 @@ def populate_with_fake_data(num_people=50, num_groups=5, num_events=15, num_reac
         num_responses = random.randint(0, min(10, len(people_dids)))
         responders = random.sample(people_dids, num_responses)
         for did in responders:
-            response = random.choice([1, 2])  # 1 = accepted, 2 = rejected
+            response = random.choice([0, 1])  # 1 = accepted, 2 = rejected
             c.execute('INSERT OR IGNORE INTO VolunteerResponses (rid, did, response) VALUES (?, ?, ?)',
                       (rid, did, response))
     conn.commit()
