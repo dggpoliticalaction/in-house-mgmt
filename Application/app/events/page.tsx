@@ -61,7 +61,7 @@ export default function EventsPage() {
 
   const fetchGroups = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8080/api/groups/');
+      const response = await fetch('/api/groups/');
       const data = await response.json();
       setGroups(data);
     } catch (error) {
@@ -83,7 +83,7 @@ export default function EventsPage() {
       if (selectedGroup && selectedGroup !== 'all') params.append('group', selectedGroup);
       if (dateFilter && dateFilter !== 'all') params.append('date_filter', dateFilter);
 
-      const response = await fetch(`http://127.0.0.1:8080/api/events/with-participants/?${params}`);
+      const response = await fetch(`/api/events/with-participants/?${params}`);
       const data = await response.json();
 
       setEvents(data.results);
@@ -116,7 +116,7 @@ export default function EventsPage() {
   const handleSubmitEvent = async (values: typeof form.values) => {
     setSubmitting(true);
     try {
-      const response = await fetch('http://127.0.0.1:8080/api/events/', {
+      const response = await fetch('/api/events/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

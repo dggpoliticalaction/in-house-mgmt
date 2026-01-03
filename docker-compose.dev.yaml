@@ -1,0 +1,31 @@
+services:
+  server: &server
+    build:
+      context: ./Server/
+      dockerfile: ./Dockerfile.dev
+    image: inhouse_suite_server
+    container_name: inhouse_suite_server
+    volumes:
+      - ./Server/:/app
+      - /app/.venv
+    environment:
+      - RUN_CREATE_DB=1
+    ports:
+      - '8080:8080'
+
+  frontend:
+    build:
+      context: ./Application/
+      dockerfile: ./Dockerfile.dev
+    image: inhouse_suite_frontend
+    container_name: inhouse_suite_frontend
+    depends_on:
+      - server
+    volumes:
+      - ./Application:/app
+      # http://jdlm.info/articles/2016/03/06/lessons-building-node-app-docker.html
+      - /app/node_modules
+    environment:
+      - BACKEND_URL=http://server:8080
+    ports:
+      - '3030:3030'

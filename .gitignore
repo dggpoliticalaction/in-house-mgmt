@@ -1,2 +1,13 @@
-__pycache__
+# Claude
 claude
+
+# Python
+__pycache__/
+.venv
+venv/
+
+# Dependency directories
+node_modules/
+
+# DB object
+*.db

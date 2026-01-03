@@ -129,7 +129,7 @@ export default function ManagementConsole() {
         page_size: itemsPerPage.toString()
       });
 
-      const response = await fetch(`http://127.0.0.1:8080/api/groups/with-counts/?${params}`);
+      const response = await fetch(`/api/groups/with-counts/?${params}`);
       const data = await response.json();
 
       // Handle both paginated and non-paginated responses
@@ -151,7 +151,7 @@ export default function ManagementConsole() {
   const fetchOrgMembers = async (gid: number) => {
     setOrgDetailsLoading(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8080/api/groups/${gid}/members/`);
+      const response = await fetch(`/api/groups/${gid}/members/`);
       const data = await response.json();
       setSelectedOrgMembers(data);
     } catch (error) {
@@ -171,8 +171,8 @@ export default function ManagementConsole() {
       });
 
       const [peopleRes, rolesRes] = await Promise.all([
-        fetch(`http://127.0.0.1:8080/api/people/?${params}`),
-        fetch('http://127.0.0.1:8080/api/general-roles/?page_size=1000') // Fetch all roles to match with current page of people
+        fetch(`/api/people/?${params}`),
+        fetch('/api/general-roles/?page_size=1000') // Fetch all roles to match with current page of people
       ]);
 
       const peopleData = await peopleRes.json();
@@ -205,7 +205,7 @@ export default function ManagementConsole() {
     try {
       // Fetch all pages
       let allResults: Person[] = [];
-      let nextUrl: string | null = 'http://127.0.0.1:8080/api/people/';
+      let nextUrl: string | null = '/api/people/';
 
       while (nextUrl) {
         const response = await fetch(nextUrl);

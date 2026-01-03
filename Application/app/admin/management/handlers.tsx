@@ -75,7 +75,7 @@ export function useAdminHandlers(props: UseHandlersProps) {
   const handleSubmitOrganization = async (values: any) => {
     setSubmitting(true);
     try {
-      const response = await fetch('http://127.0.0.1:8080/api/groups/', {
+      const response = await fetch('/api/groups/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values)
@@ -104,7 +104,7 @@ export function useAdminHandlers(props: UseHandlersProps) {
 
     setSubmitting(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8080/api/groups/${selectedOrg.gid}/`, {
+      const response = await fetch(`/api/groups/${selectedOrg.gid}/`, {
         method: 'DELETE'
       });
 
@@ -134,7 +134,7 @@ export function useAdminHandlers(props: UseHandlersProps) {
 
     setSubmitting(true);
     try {
-      const response = await fetch('http://127.0.0.1:8080/api/volunteer-in-groups/', {
+      const response = await fetch('/api/volunteer-in-groups/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -169,7 +169,7 @@ export function useAdminHandlers(props: UseHandlersProps) {
 
     setSubmitting(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8080/api/volunteer-in-groups/${selectedMember.id}/`, {
+      const response = await fetch(`/api/volunteer-in-groups/${selectedMember.id}/`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -194,7 +194,7 @@ export function useAdminHandlers(props: UseHandlersProps) {
     if (!selectedOrg) return;
 
     setSubmitting(true);
-    fetch(`http://127.0.0.1:8080/api/volunteer-in-groups/${member.id}/`, {
+    fetch(`/api/volunteer-in-groups/${member.id}/`, {
       method: 'DELETE'
     })
       .then((response) => {
@@ -224,7 +224,7 @@ export function useAdminHandlers(props: UseHandlersProps) {
 
     setSubmitting(true);
     try {
-      const response = await fetch('http://127.0.0.1:8080/api/general-roles/', {
+      const response = await fetch('/api/general-roles/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -257,7 +257,7 @@ export function useAdminHandlers(props: UseHandlersProps) {
 
     setSubmitting(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8080/api/general-roles/${selectedPerson.role_id}/`, {
+      const response = await fetch(`/api/general-roles/${selectedPerson.role_id}/`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -282,7 +282,7 @@ export function useAdminHandlers(props: UseHandlersProps) {
     if (!confirm(`Remove role for ${person.name}? The person will remain in the system.`)) return;
 
     setSubmitting(true);
-    fetch(`http://127.0.0.1:8080/api/general-roles/${person.role_id}/`, {
+    fetch(`/api/general-roles/${person.role_id}/`, {
       method: 'DELETE'
     })
       .then((response) => {

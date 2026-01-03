@@ -37,7 +37,7 @@ export default function CallsPage() {
   const fetchReaches = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://127.0.0.1:8080/api/reaches/priority/');
+      const response = await fetch('/api/reaches/priority/');
       console.log('Fetch response:', response);
       const data = await response.json();
       setReaches(data);
@@ -60,7 +60,7 @@ export default function CallsPage() {
     if (!selectedReach) return;
 
     try {
-      const response = await fetch(`http://127.0.0.1:8080/api/reaches/${selectedReach.rid}/`, {
+      const response = await fetch(`/api/reaches/${selectedReach.rid}/`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

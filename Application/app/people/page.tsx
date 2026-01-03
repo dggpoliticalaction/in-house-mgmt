@@ -59,8 +59,8 @@ export default function PeoplePage() {
   const fetchGroupsAndTags = async () => {
     try {
       const [groupsRes, tagsRes] = await Promise.all([
-        fetch('http://127.0.0.1:8080/api/groups/'),
-        fetch('http://127.0.0.1:8080/api/tags/')
+        fetch('/api/groups/'),
+        fetch('/api/tags/')
       ]);
 
       console.log('Groups response:', groupsRes);
@@ -90,7 +90,7 @@ export default function PeoplePage() {
       if (selectedGroup && selectedGroup !== 'all') params.append('group', selectedGroup);
       if (selectedTag && selectedTag !== 'all') params.append('tag', selectedTag);
 
-      const response = await fetch(`http://127.0.0.1:8080/api/people/with-relations/?${params}`);
+      const response = await fetch(`/api/people/with-relations/?${params}`);
       const data = await response.json();
 
       setPeople(data.results);
@@ -123,7 +123,7 @@ export default function PeoplePage() {
   const handleSubmitPerson = async (values: typeof form.values) => {
     setSubmitting(true);
     try {
-      const response = await fetch('http://127.0.0.1:8080/api/people/', {
+      const response = await fetch('/api/people/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

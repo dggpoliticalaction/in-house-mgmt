@@ -45,7 +45,7 @@ export default function VolunteerSearch({ reachId }: VolunteerSearchProps) {
 
   const fetchResponses = async () => {
     try {
-      const response = await fetch(`http://127.0.0.1:8080/api/volunteer-responses/by-reach/${reachId}/`);
+      const response = await fetch(`/api/volunteer-responses/by-reach/${reachId}/`);
       const data = await response.json();
 
       const responsesMap = new Map<string, VolunteerResponse>();
@@ -67,7 +67,7 @@ export default function VolunteerSearch({ reachId }: VolunteerSearchProps) {
 
     try {
       setLoading(true);
-      const response = await fetch(`http://127.0.0.1:8080/api/people/search/?q=${encodeURIComponent(query)}`);
+      const response = await fetch(`/api/people/search/?q=${encodeURIComponent(query)}`);
       const data = await response.json();
       setSearchResults(data);
     } catch (error) {
@@ -83,7 +83,7 @@ export default function VolunteerSearch({ reachId }: VolunteerSearchProps) {
     try {
       if (existingResponse && existingResponse.did && existingResponse.rid === reachId) {
         // Update existing response using composite key
-        const response = await fetch('http://127.0.0.1:8080/api/volunteer-responses/update-by-keys/', {
+        const response = await fetch('/api/volunteer-responses/update-by-keys/', {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -115,7 +115,7 @@ export default function VolunteerSearch({ reachId }: VolunteerSearchProps) {
         };
         console.log('Creating response with payload:', payload);
 
-        const response = await fetch('http://127.0.0.1:8080/api/volunteer-responses/', {
+        const response = await fetch('/api/volunteer-responses/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

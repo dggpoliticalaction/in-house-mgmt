@@ -58,7 +58,7 @@ function TagWithStats({ tag }: { tag: Tag }) {
     if (stats) return; // Already fetched
     setLoading(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8080/api/tags/${tag.tid}/acceptance-stats/`);
+      const response = await fetch(`/api/tags/${tag.tid}/acceptance-stats/`);
       const data = await response.json();
       setStats(data);
     } catch (error) {
