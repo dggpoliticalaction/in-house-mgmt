@@ -14,7 +14,7 @@ import {
 import { IconPlus, IconFileUpload, IconSearch } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
 import { useForm } from '@mantine/form';
-import PeopleTable, { type Person, type Group as PersonGroup, type Tag } from '@/components/PeopleTable';
+import PeopleTable, { type Person, type Group as PersonGroup, type Tag } from '@/app/components/PeopleTable';
 import './page.css';
 
 export default function PeoplePage() {

@@ -11,22 +11,43 @@ import {
   IconUser,
   IconLogout,
   IconSwitchHorizontal,
+  IconEyeFilled
 } from '@tabler/icons-react';
-import { Code, Group } from '@mantine/core';
+import { Code, Group, Switch } from '@mantine/core';
 import classes from './Navbar.module.css';
+import { useEffect, useState } from 'react';
 
 
-const data = [
+const notAdminData = [
   { link: '/home', label: 'Home', icon: IconHome },
   { link: '/calls', label: 'Calls', icon: IconPhone },
   { link: '/people', label: 'People', icon: IconUsers },
   { link: '/events', label: 'Events', icon: IconCalendarEvent },
-  { link: '/orgs', label: 'Orgs', icon: IconBuilding },
+  { link: '/groups', label: 'Groups', icon: IconBuilding },
 /*  { link: '/profile', label: 'Profile', icon: IconUser }, */
 ];
 
+const adminOnly = [
+  {link: '/admin/management', label: 'Management', icon: IconEyeFilled}
+]
+
 export default function NavbarSimple() {
   const pathname = usePathname();
+
+  const [admin, changeMode] = useState(false)
+  const [data, changeData] = useState<typeof notAdminData>(notAdminData)
+
+  useEffect (() => {
+    const assignData = () => {
+      if (admin) {
+        changeData([...notAdminData, ...adminOnly])
+      } else {
+        changeData(notAdminData)
+      }
+    }
+    assignData()
+  }, [admin])
+
 
   const links = data.map((item) => (
     <Link
@@ -44,12 +65,19 @@ export default function NavbarSimple() {
     <nav className={classes.navbar}>
       <div className={classes.navbarMain}>
         <Group className={classes.header} justify="space-between">
-          <Code fw={700}>v3.1.2</Code>
+          <Code fw={700}>v0.0.0</Code>
         </Group>
         {links}
       </div>
 
       <div className={classes.footer}>
+        <div>
+          <Switch
+          color='red'
+          label='Admin Mode'
+          onChange={() => changeMode(!admin)}
+          />
+        </div>
         <a href="#" className={classes.link} onClick={(event) => event.preventDefault()}>
           <IconSwitchHorizontal className={classes.linkIcon} stroke={1.5} />
           <span>Change account</span>

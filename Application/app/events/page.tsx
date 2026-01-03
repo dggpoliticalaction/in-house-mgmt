@@ -16,7 +16,7 @@ import {
 import { IconPlus, IconSearch } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
 import { useForm } from '@mantine/form';
-import EventsTable, { type Event, type Group as EventGroup } from '@/components/EventsTable';
+import EventsTable, { type Event, type Group as EventGroup } from '@/app/components/EventsTable';
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);

@@ -16,9 +16,9 @@ import {
   Box
 } from '@mantine/core';
 import { useState, useEffect } from 'react';
-import ReachesTable, { type Reach } from '@/components/ReachesTable';
-import VolunteerSearch from '@/components/VolunteerSearch';
-import { statusLabels, typeLabels } from '@/components/Labels';
+import ReachesTable, { type Reach } from '@/app/components/ReachesTable';
+import VolunteerSearch from '@/app/components/VolunteerSearch';
+import { statusLabels, typeLabels } from '@/app/components/Labels';
 
 export default function CallsPage() {
   const [reaches, setReaches] = useState<Reach[]>([]);
