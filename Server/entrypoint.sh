@@ -6,7 +6,7 @@ echo "Starting container…"
 # Optional DB creation
 if [ "${RUN_CREATE_DB}" = "1" ] || [ "${RUN_CREATE_DB}" = "true" ]; then
     echo "running create_db.py"
-    python database_creation/create_database.py
+    python database_creation/create_database.py --create-db --fake-data
 else
     echo "skipping database creation"
 fi
