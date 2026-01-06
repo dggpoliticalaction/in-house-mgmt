@@ -1,6 +1,7 @@
 import sqlite3
 from faker import Faker
 import random
+import argparse
 
 def create_database():
     conn = sqlite3.connect('dgg-crm.db')
@@ -191,20 +192,65 @@ def populate_with_fake_data(num_people=50, num_groups=5, num_events=15, num_reac
     print(f"Real tags inserted: {', '.join(real_tags)}")
 
 
-if __name__ == '__main__':
-    # Create the database schema
-    create_database()
-    print("Database schema created successfully!")
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Create the database and optionally populate it with fake data."
+    )
 
-    ans = input('Y if add fake data, N if only database creation')
-    end = False
-    while not end:
-        if ans.lower() == 'y':
-            populate_with_fake_data(num_people=50, num_groups=5, num_events=15, num_reaches=20)
-            end = True
-        elif ans.lower() == 'n':
-            end = True
-        else:
-            ans = input('Invalid input. Please enter Y or N: ')
+    parser.add_argument(
+        "--create-db",
+        action="store_true",
+        help="Create the database schema",
+    )
+
+    parser.add_argument(
+        "--fake-data",
+        action="store_true",
+        help="Populate the database with fake data",
+    )
+
+    parser.add_argument(
+        "--num-people",
+        type=int,
+        default=50,
+        help="Number of people to generate (default: 50)",
+    )
+
+    parser.add_argument(
+        "--num-groups",
+        type=int,
+        default=5,
+        help="Number of groups to generate (default: 5)",
+    )
+
+    parser.add_argument(
+        "--num-events",
+        type=int,
+        default=15,
+        help="Number of events to generate (default: 15)",
+    )
+
+    parser.add_argument(
+        "--num-reaches",
+        type=int,
+        default=20,
+        help="Number of reaches to generate (default: 20)",
+    )
+
+    return parser.parse_args()
+
+
+if __name__ == '__main__':
+    args = parse_args()
+
+    # Create the database schema
+    if args.create_db:
+        print("Creating database schema...")
+        create_database()
+        print("Database schema created successfully!")
+
+    if args.fake_data:
+        print("Populating with fake data...")
+        populate_with_fake_data(num_people=args.num_people, num_groups=args.num_groups, num_events=args.num_events, num_reaches=args.num_reaches)
 
     print("Database ready for testing!")

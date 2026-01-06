@@ -2,3 +2,4 @@ faker
 django  
 djangorestframework
 django-cors-headers
+argparse
