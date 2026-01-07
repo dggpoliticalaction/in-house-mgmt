@@ -67,6 +67,12 @@ export default function ManagementConsole() {
   const [roleTotalPages, setRoleTotalPages] = useState(1);
   const itemsPerPage = 20;
 
+  // People dropdown states
+  const [peopleSearchTerm, setPeopleSearchTerm] = useState('');
+  const [peopleLoading, setPeopleLoading] = useState(false);
+  const [peoplePage, setPeoplePage] = useState(1);
+  const [hasMorePeople, setHasMorePeople] = useState(true);
+
   // Forms
   const addOrgForm = useForm({
     initialValues: { name: '' },
@@ -108,9 +114,10 @@ export default function ManagementConsole() {
     fetchPeopleWithRoles();
   }, [roleCurrentPage]);
 
+  // Fetch people when search term or page changes
   useEffect(() => {
-    fetchAllPeople();
-  }, []);
+    fetchAllPeople(peopleSearchTerm, peoplePage);
+  }, [peopleSearchTerm, peoplePage]);
 
   // Fetch organization members when details modal opens
   useEffect(() => {
@@ -120,6 +127,7 @@ export default function ManagementConsole() {
   }, [orgDetailsOpen, selectedOrg]);
 
   // ===== Data Fetching Functions =====
+
 
   const fetchOrganizations = async () => {
     setLoading(true);
@@ -201,22 +209,34 @@ export default function ManagementConsole() {
     }
   };
 
-  const fetchAllPeople = async () => {
+  const fetchAllPeople = async (searchTerm: string = '', page: number = 1) => {
+    setPeopleLoading(true);
     try {
-      // Fetch all pages
-      let allResults: Person[] = [];
-      let nextUrl: string | null = '/api/people/';
+      const params = new URLSearchParams({
+        search: searchTerm,
+        page: page.toString()
+      });
 
-      while (nextUrl) {
-        const response = await fetch(nextUrl);
-        const data = await response.json();
-        allResults = allResults.concat(data.results || []);
-        nextUrl = data.next;
+      const response = await fetch(`/api/people/?${params}`);
+      const data = await response.json();
+
+      const results = data.results || [];
+
+      // If it's the first page or a new search, replace the list
+      // Otherwise, append to existing list for "load more" functionality
+      if (page === 1) {
+        setAllPeople(results);
+      } else {
+        setAllPeople(prev => [...prev, ...results]);
       }
 
-      setAllPeople(allResults);
+      // Check if there are more pages available
+      setHasMorePeople(!!data.next);
     } catch (error) {
       console.error('Error fetching people:', error);
+      setAllPeople([]);
+    } finally {
+      setPeopleLoading(false);
     }
   };
 
@@ -331,10 +351,12 @@ export default function ManagementConsole() {
               <Group gap="xs" style={{ cursor: 'pointer' }} onClick={() => setOrgSectionOpen(!orgSectionOpen)}>
                 <IconBuilding size={24} />
                 <Title order={3}>Organization Management</Title>
-                <ActionIcon variant="subtle" size="lg">
+
+                <ActionIcon variant="subtle" size="lg" fs="italic">
                   {orgSectionOpen ? <IconChevronUp size={20} /> : <IconChevronDown size={20} />}
                 </ActionIcon>
               </Group>
+
               <Group gap="sm">
                 <Button
                   leftSection={<IconPlus size={16} />}
@@ -343,9 +365,16 @@ export default function ManagementConsole() {
                   Add Organization
                 </Button>
               </Group>
+                   
             </Group>
 
+
+
             <Collapse in={orgSectionOpen}>
+            <Text size="sm" c="dimmed" style={{marginTop: '-10px'}}>
+              Press a group to modify who has access to it.
+            </Text>
+
               <OrganizationsTable
                 organizations={organizations}
                 loading={loading}
@@ -477,7 +506,11 @@ export default function ManagementConsole() {
       {/* Add Member Modal */}
       <Modal
         opened={addMemberOpen}
-        onClose={() => setAddMemberOpen(false)}
+        onClose={() => {
+          setAddMemberOpen(false);
+          setPeopleSearchTerm(''); // Reset search on close
+          setPeoplePage(1);
+        }}
         title="Add Member to Organization"
         size="md"
       >
@@ -485,12 +518,28 @@ export default function ManagementConsole() {
           <Stack gap="md">
             <Select
               label="Person"
-              placeholder="Select person"
+              placeholder="Search for a person"
               required
               data={personOptions}
               searchable
+              onSearchChange={(search) => {
+                setPeopleSearchTerm(search);
+                setPeoplePage(1);
+              }}
+              searchValue={peopleSearchTerm}
+              nothingFoundMessage={peopleLoading ? "Loading..." : "No people found"}
               {...addMemberForm.getInputProps('person')}
             />
+            {hasMorePeople && !peopleLoading && (
+              <Text size="xs" c="dimmed">
+                Showing first page of results. Type to search for more people.
+              </Text>
+            )}
+            {hasMorePeople && peopleLoading && (
+              <Text size="xs" c="dimmed">
+                Loading more results...
+              </Text>
+            )}
             <Select
               label="Access Level"
               placeholder="Select access level"
