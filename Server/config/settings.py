@@ -105,6 +105,12 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20
 }
 
+# Only for local development, we will disable all authentication
+if DEBUG:
+    REST_FRAMEWORK['DEFAULT_PERMISSION_CLASSES'] = [
+        'rest_framework.permissions.AllowAny'
+    ]
+    REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES']= []
 
 
 # Password validation

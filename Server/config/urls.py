@@ -21,7 +21,7 @@ from django.urls import path, include
 urlpatterns = [
     path("admin/", admin.site.urls),
     # path('', include('dggcrm.api.urls')),
-    path('api/contacts', include('dggcrm.contacts.urls')),
-    path('api/events', include('dggcrm.events.urls')),
-    path('api/tickets', include('dggcrm.tickets.urls')),
+    path('api/', include('dggcrm.contacts.urls')),
+    path('api/', include('dggcrm.events.urls')),
+    path('api/', include('dggcrm.tickets.urls')),
 ]
