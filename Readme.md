@@ -57,17 +57,17 @@ python fake/main.py --help
 When making a DB change to `models.py`, you must create and then deploy a new migration.
 
 ```bash
-docker compose -f docker-compose.dev.yaml run --rm server python dggcrm/manage.py makemigrations
+docker compose -f docker-compose.dev.yaml run --rm server python manage.py makemigrations
 
-docker compose -f docker-compose.dev.yaml run --rm server python dggcrm/manage.py migrate
+docker compose -f docker-compose.dev.yaml run --rm server python manage.py migrate
 ```
 
 You may neeed to define the specific module you want to migrate. e.g:
 
 ```bash
-docker compose -f docker-compose.dev.yaml run --rm server python dggcrm/manage.py makemigrations base
+docker compose -f docker-compose.dev.yaml run --rm server python manage.py makemigrations base
 
-docker compose -f docker-compose.dev.yaml run --rm server python dggcrm/manage.py migrate base
+docker compose -f docker-compose.dev.yaml run --rm server python manage.py migrate base
 ```
 
 Before you merge a PR with DB changes, make sure that you combine your migrations into a single file by deleting the new migration files, and recreating them.

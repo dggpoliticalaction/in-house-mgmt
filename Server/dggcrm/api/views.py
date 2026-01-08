@@ -2,7 +2,7 @@ from rest_framework.response import Response  # Fix import
 from rest_framework.decorators import action, api_view
 from rest_framework import viewsets, status
 from django.db.models import Q
-from base.models import (
+from dggcrm.base.models import (
     Person, Group, Event, VolunteerInGroup,
     Tag, AssignedTag, EventParticipant,
     Reach, VolunteerResponse, GeneralRole

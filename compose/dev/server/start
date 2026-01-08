@@ -7,10 +7,10 @@ set -o nounset
 echo "Starting server..."
 
 # Run migrations before starting server
-python dggcrm/manage.py migrate
+python manage.py migrate
 
 # Optionaly fill DB with fake data
 if [ "${INSERT_FAKE_DATA}" = "1" ] || [ "${INSERT_FAKE_DATA}" = "true" ]; then
     python fake/main.py "${DATABASE_URL}"
 fi
-exec python dggcrm/manage.py runserver 0.0.0.0:8080
+exec python manage.py runserver 0.0.0.0:8080

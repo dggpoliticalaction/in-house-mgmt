@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from base.models import Person, Group, Event, VolunteerInGroup, Tag, AssignedTag, EventParticipant, Reach, VolunteerResponse, GeneralRole
+from dggcrm.base.models import Person, Group, Event, VolunteerInGroup, Tag, AssignedTag, EventParticipant, Reach, VolunteerResponse, GeneralRole
 
 class PersonSerializer(serializers.ModelSerializer):
     class Meta:

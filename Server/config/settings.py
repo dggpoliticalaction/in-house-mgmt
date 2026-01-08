@@ -37,18 +37,30 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 # Application definition
 
-INSTALLED_APPS = [
+DJANGO_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+]
 
+THIRD_PARTY_APPS = [
     "rest_framework",
     "corsheaders",
-    "base",
 ]
+
+LOCAL_APPS = [
+    # TODO: remove base app once other apps are ready
+    # "dggcrm.base",
+    "dggcrm.contacts",
+    "dggcrm.tickets",
+    "dggcrm.events",
+]
+
+# https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -61,7 +73,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "dggcrm.urls"
+ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
     {
@@ -78,7 +90,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "dggcrm.wsgi.application"
+WSGI_APPLICATION = "config.wsgi.application"
 
 
 # Database
