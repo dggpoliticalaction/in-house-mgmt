@@ -25,7 +25,8 @@ class ContactViewSet(viewsets.ModelViewSet):
         queryset = super().get_queryset()
 
         query = self.request.query_params.get("q", "").strip()
-
+        tag = self.request.query_params.get("tag")
+        
         # TODO add querying by event participation
 
         if query:
@@ -36,6 +37,13 @@ class ContactViewSet(viewsets.ModelViewSet):
                 Q(phone__icontains=query) |
                 Q(note__icontains=query)
             )
+
+        if tag:
+            # allow filtering by tag id OR tag name
+            if tag.isdigit():
+                queryset = queryset.filter(tags__id=tag)
+            else:
+                queryset = queryset.filter(tags__name__iexact=tag)
         return queryset
 
 

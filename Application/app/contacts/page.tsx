@@ -91,7 +91,7 @@ export default function PeoplePage() {
         const params = new URLSearchParams();
         if (searchQuery) params.append('q', searchQuery);
         if (selectedTag && selectedTag !== 'all') params.append('tag', selectedTag);
-        fetchUrl = `/api/contacts/search/?${params}`;
+        fetchUrl = `/api/contacts/?${params}`;
       }
 
       console.log("Fetch URL:", fetchUrl);

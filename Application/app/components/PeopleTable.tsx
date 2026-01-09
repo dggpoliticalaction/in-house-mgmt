@@ -46,19 +46,19 @@ function TagWithStats({ tag, personDid }: { tag: Tag; personDid: string }) {
   const [loading, setLoading] = useState(false);
   const [opened, setOpened] = useState(false);
 
-  const fetchStats = async () => {
-    if (stats) return; // Already fetched
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/people/${personDid}/acceptance-stats/`);
-      const data = await response.json();
-      setStats(data);
-    } catch (error) {
-      console.error('Error fetching acceptance stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const fetchStats = async () => {
+  //   if (stats) return; // Already fetched
+  //   setLoading(true);
+  //   try {
+  //     const response = await fetch(`/api/people/${personDid}/acceptance-stats/`);
+  //     const data = await response.json();
+  //     setStats(data);
+  //   } catch (error) {
+  //     console.error('Error fetching acceptance stats:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
     <HoverCard
@@ -67,7 +67,7 @@ function TagWithStats({ tag, personDid }: { tag: Tag; personDid: string }) {
       opened={opened}
       onOpen={() => {
         setOpened(true);
-        fetchStats();
+        // fetchStats();
       }}
       onClose={() => setOpened(false)}
     >
