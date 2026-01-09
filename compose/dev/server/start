@@ -9,6 +9,22 @@ echo "Starting server..."
 # Run migrations before starting server
 python manage.py migrate
 
+# Optionaly create super user
+if [ "${CREATE_SUPER_USER}" = "1" ] || [ "${CREATE_SUPER_USER}" = "true" ]; then
+    echo "Creating testing super user..."
+
+    # Allow overrides in docker-compose
+    export DJANGO_SUPERUSER_USERNAME=${DJANGO_SUPERUSER_USERNAME:=admin}
+    export DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL:=admin@example.com}
+    export DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD:=admin}
+
+    if ! python manage.py createsuperuser --noinput --skip-checks; then
+        echo "Superuser creation failed (likely already exists). Continuing..."
+    fi
+else
+    echo "Skipping super user..."
+fi
+
 # Optionaly fill DB with fake data
 if [ "${INSERT_FAKE_DATA}" = "1" ] || [ "${INSERT_FAKE_DATA}" = "true" ]; then
     python fake/main.py "${DATABASE_URL}"

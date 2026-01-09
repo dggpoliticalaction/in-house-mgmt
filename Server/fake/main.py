@@ -118,13 +118,12 @@ def populate_with_fake_data(conn, num_contacts=50, num_events=15, num_tickets=30
         num_users = random.randint(1, len(user_ids))
         users = random.sample(user_ids, num_users)
         for uid in users:
-            role = random.choice(["organizer","participant","volunteer","staff"])
             joined_at = fake.date_time_between(start_date='-1y', end_date='now')
             c.execute(
-                "INSERT INTO users_in_event (user_id, event_id, role, joined_at) "
-                "VALUES (%s, %s, %s, %s) "
+                "INSERT INTO users_in_events (user_id, event_id, joined_at) "
+                "VALUES (%s, %s, %s) "
                 "ON CONFLICT DO NOTHING",
-                (uid, eid, role, joined_at)
+                (uid, eid, joined_at)
             )
     conn.commit()
 
@@ -136,13 +135,14 @@ def populate_with_fake_data(conn, num_contacts=50, num_events=15, num_tickets=30
         ticket_status = random.choice(['OPEN','TODO','IN_PROGRESS','BLOCKED','COMPLETED','CANCELED'])
         ticket_type = random.choice(['UNKNOWN', 'INTRODUCTION', 'RECURIT', 'CONFIRM'])
         priority = random.choice([i for i in range(6)])
+        assigned_to = random.choice(user_ids + [None])
         reported_by = random.choice(user_ids) if len(user_ids) > 0 else None
         created_at = fake.date_time_between(start_date='-1y', end_date='now')
         modified_at = created_at + timedelta(days=random.randint(0,5))
         c.execute(
-            "INSERT INTO tickets (title, description, ticket_status, ticket_type, reported_by_id, priority, created_at, modified_at) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
-            (name, description, ticket_status, ticket_type, reported_by, priority, created_at, modified_at)
+            "INSERT INTO tickets (title, description, ticket_status, ticket_type, assigned_to_id, reported_by_id, priority, created_at, modified_at) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
+            (name, description, ticket_status, ticket_type, assigned_to, reported_by, priority, created_at, modified_at)
         )
         ticket_ids.append(c.fetchone()[0])
     conn.commit()

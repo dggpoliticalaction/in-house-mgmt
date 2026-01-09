@@ -36,20 +36,22 @@ docker compose -f docker-compose.dev.yaml up
 
 ## Populate DB with fake data
 
-There are two ways to run the script:
+Examining the docker-compose file, you will notice the env var `INSERT_FAKE_DATA`. Setting this to `true` will run the `fake/main.py` script on startup.
 
-```bash
-# Directly
-python fake/main.py postgres://tiny:password@localhost:5432/dggcrm
+## Local Super User
 
-# With Docker
-docker compose -f docker-compose.dev.yaml run --rm server python fake/main.py postgres://tiny:password@postgres:5432/dggcrm
+Examining the docker-compose file, you will notice the env var `CREATE_SUPER_USER`. Setting this to `true` will create a super user with the following credentials:
+
+* **Username**: `admin`
+* **Email**: `admin@example.com`
+* **Password**: `admin`
+
+You can override the above using the following env vars:
+
 ```
-
-This will populate the database with a fake data for testing purposes. You may consider examining the help menu for more direction:
-
-```bash
-python fake/main.py --help
+DJANGO_SUPERUSER_USERNAME
+DJANGO_SUPERUSER_EMAIL
+DJANGO_SUPERUSER_PASSWORD
 ```
 
 ## Database Schema changes

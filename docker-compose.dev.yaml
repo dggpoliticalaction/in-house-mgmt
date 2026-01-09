@@ -30,6 +30,7 @@ services:
       - /app/.venv
     environment:
       - INSERT_FAKE_DATA=true
+      - CREATE_SUPER_USER=true
     env_file:
       - ./.envs/.dev/.postgres
     ports:
