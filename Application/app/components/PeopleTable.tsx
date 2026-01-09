@@ -4,6 +4,7 @@ import { Table, Badge, Stack, Title, LoadingOverlay, Paper, Group, Text, Paginat
 import { useState } from 'react';
 
 export interface Person {
+  id: number;
   discord_id: string;
   full_name: string;
   email: string | null;
@@ -12,14 +13,15 @@ export interface Person {
 }
 
 export interface Group {
-  gid: number;
+  id: number;
   name: string;
   access_level?: number;
 }
 
 export interface Tag {
-  tid: number;
+  id: number;
   name: string;
+  color: string
 }
 
 interface PeopleTableProps {
@@ -41,7 +43,7 @@ interface AcceptanceStats {
   acceptance_percentage: number;
 }
 
-function TagWithStats({ tag, personDid }: { tag: Tag; personDid: string }) {
+function TagWithStats({ tag, contact }: { tag: Tag; contact: Contact }) {
   const [stats, setStats] = useState<AcceptanceStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [opened, setOpened] = useState(false);
@@ -72,7 +74,7 @@ function TagWithStats({ tag, personDid }: { tag: Tag; personDid: string }) {
       onClose={() => setOpened(false)}
     >
       <HoverCard.Target>
-        <Badge variant="dot" size="sm" style={{ cursor: 'pointer' }}>
+        <Badge size="sm" color={tag.color} style={{ cursor: 'pointer' }}>
           {tag.name}
         </Badge>
       </HoverCard.Target>
@@ -157,7 +159,7 @@ export default function PeopleTable({
                     {person.tags && person.tags.length > 0 ? (
                       <Group gap="xs">
                         {person.tags.slice(0, 3).map((tag) => (
-                          <TagWithStats key={tag.tid} tag={tag} personDid={person.discord_id} />
+                          <TagWithStats key={tag.id} tag={tag} person={person} />
                         ))}
                         {person.tags.length > 3 && (
                           <Badge variant="dot" size="sm" c="dimmed">

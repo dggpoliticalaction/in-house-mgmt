@@ -4,10 +4,7 @@ from .models import Contact, Tag, TagAssignments
 
 
 class ContactSerializer(serializers.ModelSerializer):
-    tags = serializers.ListField(
-        child=serializers.CharField(),
-        required=False,
-    )
+    tags = serializers.SerializerMethodField()
 
     class Meta:
         model = Contact
@@ -20,10 +17,10 @@ class ContactSerializer(serializers.ModelSerializer):
 
     def get_tags(self, obj):
         """Get tags for this person"""
-        assigned_tags = TagAssignments.objects.filter(contact_id=obj).select_related('taggings')
+        assigned_tags = TagAssignments.objects.filter(contact_id=obj).select_related('tag')
         return [
             {
-                'id': at.tag.tid,
+                'id': at.tag.id,
                 'name': at.tag.name,
                 'color': at.tag.color
             }

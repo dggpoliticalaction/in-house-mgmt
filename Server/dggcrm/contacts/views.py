@@ -41,9 +41,10 @@ class ContactViewSet(viewsets.ModelViewSet):
         if tag:
             # allow filtering by tag id OR tag name
             if tag.isdigit():
-                queryset = queryset.filter(tags__id=tag)
+                queryset = queryset.filter(taggings__tag__id=tag)
             else:
-                queryset = queryset.filter(tags__name__iexact=tag)
+                queryset = queryset.filter(taggings__tag__name__iexact=tag)
+
         return queryset
 
 

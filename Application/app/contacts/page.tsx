@@ -137,6 +137,7 @@ export default function PeoplePage() {
         tags: selectedTags
       };
 
+      // TODO: Fix this API call
       const response = await fetch('/api/people/person-and-tags/', {
         method: 'POST',
         headers: {
