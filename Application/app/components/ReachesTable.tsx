@@ -1,11 +1,11 @@
 'use client';
 
 import { Table, Badge, Stack, Title, LoadingOverlay, Paper } from '@mantine/core';
-import { statusLabels, typeLabels } from './Labels';
 
+// TODO: Rename to Ticket
 export interface Reach {
   id: number;
-  status: number;
+  tiket_status: number;
   contact: string | null;
   title: string;
   description: string;
@@ -15,6 +15,7 @@ export interface Reach {
   modified_at: string;
 }
 
+// TODO: Rename to TicketTableProbs
 interface ReachesTableProps {
   reaches: Reach[];
   loading?: boolean;
@@ -23,20 +24,22 @@ interface ReachesTableProps {
 }
 
 const getPriorityColor = (priority: number) => {
-  if (priority >= 8) return 'red';
-  if (priority >= 5) return 'orange';
-  if (priority >= 3) return 'yellow';
-  return 'blue';
+  if (priority < 1) return 'red';
+  if (priority < 3) return 'orange';
+  if (priority == 3) return 'yellow';
+  if (priority <= 5) return 'gray';
+  return 'gray';
 };
 
-const getStatusColor = (status: number) => {
+const getStatusColor = (status: string) => {
   switch (status) {
-    case 0: return 'gray';
-    case 1: return 'blue';
-    case 2: return 'cyan';
-    case 3: return 'red';
-    case 4: return 'green';
-    default: return 'gray';
+    case 'OPEN': return 'gray';
+    case 'TODO': return 'gray';
+    case 'IN_PROGRESS': return 'blue';
+    case 'BLOCKED': return 'red';
+    case 'COMPLETED': return 'DimGray';
+    case 'CANCELED': return 'red';
+    default: return 'DimGray';
   }
 };
 
@@ -72,16 +75,16 @@ export default function ReachesTable({
                 <Table.Td>{reach.id}</Table.Td>
                 <Table.Td>{reach.title}</Table.Td>
                 <Table.Td>
-                  <Badge variant="light">{typeLabels[reach.ticket_type] || reach.ticket_type}</Badge>
+                  <Badge variant="light">{reach.type_display}</Badge>
                 </Table.Td>
                 <Table.Td>
                   <Badge color={getPriorityColor(reach.priority)}>
-                    {reach.priority}
+                    P{reach.priority}
                   </Badge>
                 </Table.Td>
                 <Table.Td>
-                  <Badge color={getStatusColor(reach.status)}>
-                    {statusLabels[reach.status]}
+                  <Badge color={getStatusColor(reach.ticket_status)}>
+                    {reach.status_display}
                   </Badge>
                 </Table.Td>
                 <Table.Td>{reach.contact || 'Unassigned'}</Table.Td>

@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import {
   IconHome,
   IconInfoCircle,
-  IconPhone,
+  IconTicket,
   IconUsers,
   IconCalendarEvent,
   IconBuilding,
@@ -20,7 +20,7 @@ import { useEffect, useState } from 'react';
 
 const notAdminData = [
   { link: '/home', label: 'Home', icon: IconHome },
-  { link: '/calls', label: 'Calls', icon: IconPhone },
+  { link: '/tickets', label: 'Tickets', icon: IconTicket },
   { link: '/contacts', label: 'Contacts', icon: IconUsers },
   { link: '/events', label: 'Events', icon: IconCalendarEvent },
 /*  { link: '/profile', label: 'Profile', icon: IconUser }, */

@@ -20,9 +20,10 @@ import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
 import ReachesTable, { type Reach } from '@/app/components/ReachesTable';
 import VolunteerSearch from '@/app/components/VolunteerSearch';
-import { statusLabels, typeLabels } from '@/app/components/Labels';
 
-export default function CallsPage() {
+// TODO: /tickets/123 doesn't work, we should make sure the url reflects the current ticket
+// TODO: Rename reaches/calls to use Ticket as name
+export default function TicketPage() {
   const [reaches, setReaches] = useState<Reach[]>([]);
   const [selectedReach, setSelectedReach] = useState<Reach | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,7 +71,7 @@ export default function CallsPage() {
     if (!selectedReach) return;
 
     try {
-      const response = await fetch(`/api/calls/${selectedReach.id}/`, {
+      const response = await fetch(`/api/tickets/${selectedReach.id}/`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -100,21 +101,25 @@ export default function CallsPage() {
     }
   };
 
+  // TODO: Use code in ReachesTable.tsx
   const getPriorityColor = (priority: number) => {
-    if (priority >= 8) return 'red';
-    if (priority >= 5) return 'orange';
-    if (priority >= 3) return 'yellow';
-    return 'blue';
+    if (priority < 1) return 'red';
+    if (priority < 3) return 'orange';
+    if (priority == 3) return 'yellow';
+    if (priority <= 5) return 'gray';
+    return 'gray';
   };
 
-  const getStatusColor = (status: number) => {
+  // TODO: Use code in ReachesTable.tsx
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 0: return 'gray';
-      case 1: return 'blue';
-      case 2: return 'cyan';
-      case 3: return 'red';
-      case 4: return 'green';
-      default: return 'gray';
+      case 'OPEN': return 'gray';
+      case 'TODO': return 'gray';
+      case 'IN_PROGRESS': return 'blue';
+      case 'BLOCKED': return 'red';
+      case 'COMPLETED': return 'DimGray';
+      case 'CANCELED': return 'red';
+      default: return 'DimGray';
     }
   };
 
@@ -127,7 +132,7 @@ export default function CallsPage() {
             {/* Header */}
             <Group justify="space-between">
               <Title order={2}>
-                {selectedReach ? selectedReach.title : 'Call Queue Management'}
+                {selectedReach ? selectedReach.title : 'Ticket Queue Management'}
               </Title>
               {selectedReach && (
                 <Button variant="outline" onClick={handleBackToTable}>
@@ -277,8 +282,8 @@ export default function CallsPage() {
                 <Stack gap="sm">
                   <Box>
                     <Text size="sm" c="dimmed">Status</Text>
-                    <Badge variant="filled" color={getStatusColor(selectedReach.status)} mt={4}>
-                      {statusLabels[selectedReach.status]}
+                    <Badge variant="filled" color={getStatusColor(selectedReach.ticket_status)} mt={4}>
+                      {selectedReach.status_display}
                     </Badge>
                   </Box>
                   <Divider />
@@ -291,7 +296,7 @@ export default function CallsPage() {
                   <Divider />
                   <Box>
                     <Text size="sm" c="dimmed">Type</Text>
-                    <Text size="sm" mt={4}>{typeLabels[selectedReach.ticket_type] || selectedReach.type}</Text>
+                    <Text size="sm" mt={4}>{selectedReach.type_display}</Text>
                   </Box>
                   <Divider />
                   <Box>

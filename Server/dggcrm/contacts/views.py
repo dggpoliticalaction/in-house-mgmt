@@ -21,11 +21,12 @@ class ContactViewSet(viewsets.ModelViewSet):
 
     # TODO: Update search api to properly handle permissions,
     #   access, and search all fields
-    @action(detail=False, methods=['get'], url_path='search')
-    def search(self, request):
-        """GET /api/people/search/?q=search_term"""
-        query = request.query_params.get("q", "").strip()
-        queryset = self.get_queryset()
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        query = self.request.query_params.get("q", "").strip()
+
+        # TODO add querying by event participation
 
         if query:
             queryset = queryset.filter(
@@ -35,15 +36,7 @@ class ContactViewSet(viewsets.ModelViewSet):
                 Q(phone__icontains=query) |
                 Q(note__icontains=query)
             )
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        # fallback (no pagination, should rarely happen)
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        return queryset
 
 
 class TagViewSet(viewsets.ModelViewSet):
