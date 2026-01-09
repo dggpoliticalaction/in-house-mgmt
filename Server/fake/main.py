@@ -4,216 +4,179 @@ import psycopg
 from faker import Faker
 import random
 import argparse
+from datetime import datetime, timedelta
 
-# Retrieves db connection from dsn
+# --- DB Connection ---
 def get_db_conn(dsn: str):
     parsed = urlparse(dsn)
     if parsed.scheme == "sqlite":
-        return sqlite3.connect(
-            parsed.path if parsed.path != "/:memory:" else ":memory:"
-        )
+        return sqlite3.connect(parsed.path if parsed.path != "/:memory:" else ":memory:")
     if parsed.scheme in {"postgres", "postgresql"}:
         return psycopg.connect(dsn)
-
     raise ValueError(f"Unsupported DB scheme: {parsed.scheme}")
 
-def populate_with_fake_data(conn, num_people=50, num_groups=5, num_events=15, num_reaches=20):
-    """
-    Populate the database with fake data for testing.
-    Only Tags will have real data: Dev-Software, Dev-Art, Community Building, Attendence
-    """
+
+# --- Fake Data Population ---
+def populate_with_fake_data(conn, num_contacts=50, num_events=15, num_tickets=30):
     fake = Faker()
     c = conn.cursor()
 
-    # Insert REAL Tags
-    real_tags = ['Dev-Software', 'Dev-Art', 'Community Building', 'Attendence']
-    for tag in real_tags:
+    # Insert tags
+    tags = ["Dev-Software", "Dev-Art", "Community Building", "Attendance"]
+    for tag in tags:
+        color = random.choice(['#b98141', '#803e3e', '#f647a2', '#1854f5'])
+        now = datetime.now()
         c.execute(
-            'INSERT INTO tags (name) VALUES (%s) ON CONFLICT (name) DO NOTHING',
-            (tag,),
+            "INSERT INTO tags (name, color, created_at, modified_at) VALUES (%s, %s, %s, %s) "
+            "ON CONFLICT (name) DO NOTHING",
+            (tag, color, now, now),
         )
     conn.commit()
 
-    # Get tag IDs
-    c.execute('SELECT tid FROM tags')
-    tag_ids = [row[0] for row in c.fetchall()]
+    c.execute("SELECT id, name FROM tags")
+    tag_map = {row[1]: row[0] for row in c.fetchall()}
 
-    # Generate fake People (using discord-like IDs)
-    people_dids = []
-    for _ in range(num_people):
-        did = str(random.randint(100000000000000000, 999999999999999999))  # 18-digit discord ID
-        name = fake.name()
+    # Contacts
+    contact_ids = []
+    for _ in range(num_contacts):
+        full_name = fake.name()
+        discord_id = str(random.randint(100_000_000_000_000_000, 999_999_999_999_999_999))
         email = fake.email()
         phone = fake.phone_number()
+        note = fake.text(max_nb_chars=200)
         c.execute(
-            'INSERT INTO people (did, name, email, phone) VALUES (%s, %s, %s, %s) '
-            'ON CONFLICT (did) DO NOTHING',
-            (did, name, email, phone),
+            "INSERT INTO contacts (full_name, discord_id, email, phone, note, created_at, modified_at) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id",
+            (full_name, discord_id, email, phone, note, datetime.now(), datetime.now())
         )
-        people_dids.append(did)
+        contact_ids.append(c.fetchone()[0])
     conn.commit()
 
-    # Generate fake Groups
-    group_ids = []
-    group_names = [fake.company() for _ in range(num_groups)]
-    for name in group_names:
-        c.execute(
-            'INSERT INTO groups (name) VALUES (%s) RETURNING gid',
-            (name,),
-        )
-        group_ids.append(c.fetchone()[0])
-    conn.commit()
-
-    # Assign volunteers to groups with access levels
-    for did in people_dids:
-        # Each person joins 0-3 random groups
-        num_groups_to_join = random.randint(0, min(3, len(group_ids)))
-        selected_groups = random.sample(group_ids, num_groups_to_join)
-        for gid in selected_groups:
-            access_level = random.choice([0, 1])  # 1 = view, 2 = edit
+    # Tag assignments
+    for cid in contact_ids:
+        num_tags = random.randint(0, min(3, len(tag_map)))
+        selected_tags = random.sample(list(tag_map.values()), num_tags)
+        for tid in selected_tags:
             c.execute(
-                'INSERT INTO volunteer_in_groups (did, gid, access_level) VALUES (%s, %s, %s) '
-                'ON CONFLICT DO NOTHING',
-                (did, gid, access_level),
+                "INSERT INTO tag_assignments (contact_id, tag_id, created_at) VALUES (%s, %s, %s) "
+                "ON CONFLICT DO NOTHING",
+                (cid, tid, datetime.now())
             )
     conn.commit()
 
-    # Assign General Roles to people
-    for did in people_dids:
-        # 0 = Needs approval, 1 = normal organizer, 2 = admin
-        access_level = random.choices([0, 1, 2], weights=[10, 80, 10])[0]  # Most are normal organizers
-        c.execute(
-            'INSERT INTO general_role (did, access_level) VALUES (%s, %s)',
-            (did, access_level),
-        )
-    conn.commit()
-
-    # Generate fake Events
+    # Events
     event_ids = []
     for _ in range(num_events):
         name = fake.catch_phrase()
         description = fake.text(max_nb_chars=200)
-        date = fake.date_time_between(start_date='-1y', end_date='+1y').isoformat()
-        location = fake.address()
-        group = random.choice(group_ids)
+        event_status = random.choice(['draft', 'scheduled', 'completed', 'canceled'])  # 
+
+        # Timestamps
+        created_at = fake.date_time_between(start_date='-1y', end_date='now')
+        modified_at = created_at + timedelta(days=random.randint(0, 10))
+        starts_at = created_at + timedelta(days=random.randint(0, 30), hours=random.randint(0, 23))
+        ends_at = starts_at + timedelta(hours=random.randint(1, 4))  # 1–4 hours duration
+
         c.execute(
-            'INSERT INTO events (name, description, date, location, group_id) '
-            'VALUES (%s, %s, %s, %s, %s) RETURNING eid',
-            (name, description, date, location, group),
+            """
+            INSERT INTO events 
+            (name, description, event_status, location_name, location_address, created_at, modified_at, starts_at, ends_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+            """,
+            (name, description, event_status, '', '123 Main St', created_at, modified_at, starts_at, ends_at)
         )
         event_ids.append(c.fetchone()[0])
     conn.commit()
 
-    # Assign Event Participants
+
+    # Event participation
     for eid in event_ids:
-        # Each event has 5-20 random participants
-        num_participants = random.randint(5, min(20, len(people_dids)))
-        participants = random.sample(people_dids, num_participants)
-        for did in participants:
+        num_participants = random.randint(1, min(10, len(contact_ids)))
+        participants = random.sample(contact_ids, num_participants)
+        for cid in participants:
+            status = random.choice(['UNKNOWN','REJECTED','COMMITTED','MAYBE','ATTENDED','NO_SHOW'])
+            created_at = fake.date_time_between(start_date='-1y', end_date='now')
+            modified_at = created_at + timedelta(days=random.randint(0,5))
             c.execute(
-                'INSERT INTO event_participants (eid, did) VALUES (%s, %s) '
-                'ON CONFLICT DO NOTHING',
-                (eid, did),
+                "INSERT INTO event_participations (event_id, contact_id, status, created_at, modified_at) VALUES (%s, %s, %s, %s, %s) "
+                "ON CONFLICT DO NOTHING",
+                (eid, cid, status, created_at, modified_at)
             )
     conn.commit()
 
-    # Assign Tags to People
-    for did in people_dids:
-        # Each person gets 1-3 random tags
-        num_tags = random.randint(0, min(2, len(tag_ids)))
-        selected_tags = random.sample(tag_ids, num_tags)
-        for tid in selected_tags:
+    # Users
+    c.execute("SELECT id FROM auth_user")
+    user_ids = [row[0] for row in c.fetchall()]
+    if not user_ids:
+        # TODO: Generate fake users?
+        users_id = []
+
+    # Users in events
+    for eid in event_ids:
+        if len(user_ids) < 1:
+            break
+        num_users = random.randint(1, len(user_ids))
+        users = random.sample(user_ids, num_users)
+        for uid in users:
+            role = random.choice(["organizer","participant","volunteer","staff"])
+            joined_at = fake.date_time_between(start_date='-1y', end_date='now')
             c.execute(
-                'INSERT INTO assigned_tags (did, tid) VALUES (%s, %s) '
-                'ON CONFLICT DO NOTHING',
-                (did, tid),
+                "INSERT INTO users_in_event (user_id, event_id, role, joined_at) "
+                "VALUES (%s, %s, %s, %s) "
+                "ON CONFLICT DO NOTHING",
+                (uid, eid, role, joined_at)
             )
     conn.commit()
 
-    # Generate fake Reaches
-    reach_ids = []
-    reach_types = ['asset', 'sof_dev', 'ally-reach']
-    for _ in range(num_reaches):
-        status = random.randint(0, 3)  # 0-3 for different statuses
-        assigned = random.choice(people_dids + [None])  # Some may be unassigned
-        title = fake.sentence(nb_words=6)
-        description = fake.text(max_nb_chars=300)
-        reach_type = random.choice(reach_types)
-        priority = random.randint(1, 5)  # 1 = highest, 5 = lowest
+    # Tickets
+    ticket_ids = []
+    for _ in range(num_tickets):
+        name = fake.catch_phrase()
+        description = fake.text(max_nb_chars=200)
+        ticket_status = random.choice(['OPEN','TODO','IN_PROGRESS','BLOCKED','COMPLETED','CANCELED'])
+        ticket_type = random.choice(['UNKNOWN', 'INTRODUCTION', 'RECURIT', 'CONFIRM'])
+        priority = random.choice([i for i in range(6)])
+        reported_by = random.choice(user_ids) if len(user_ids) > 0 else None
+        created_at = fake.date_time_between(start_date='-1y', end_date='now')
+        modified_at = created_at + timedelta(days=random.randint(0,5))
         c.execute(
-            'INSERT INTO reaches (status, assigned, title, description, type, priority) '
-            'VALUES (%s, %s, %s, %s, %s, %s) RETURNING rid',
-            (status, assigned, title, description, reach_type, priority),
+            "INSERT INTO tickets (title, description, ticket_status, ticket_type, reported_by_id, priority, created_at, modified_at) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
+            (name, description, ticket_status, ticket_type, reported_by, priority, created_at, modified_at)
         )
-        reach_ids.append(c.fetchone()[0])
+        ticket_ids.append(c.fetchone()[0])
     conn.commit()
 
-    # Generate Volunteer Responses to Reaches
-    for rid in reach_ids:
-        # Each reach gets 0-10 volunteer responses
-        num_responses = random.randint(0, min(10, len(people_dids)))
-        responders = random.sample(people_dids, num_responses)
-        for did in responders:
-            response = random.choice([0, 1])  # 1 = accepted, 2 = rejected
+    # Ticket audit logs / comments
+    for tid in ticket_ids:
+        num_logs = random.randint(0, 5)
+        for _ in range(num_logs):
+            event_type = random.choice(['CREATED','UPDATED','CLAIM','COMMENT'])
+            message = fake.sentence(nb_words=8)
+            actor = random.choice(user_ids + [None])  # None = system
+            created_at = fake.date_time_between(start_date='-1y', end_date='now')
             c.execute(
-                'INSERT INTO volunteer_responses (rid, did, response) VALUES (%s, %s, %s) '
-                'ON CONFLICT DO NOTHING',
-                (rid, did, response),
+                "INSERT INTO ticket_audit_logs (ticket_id, log_type, message, actor_id, data, created_at) "
+                "VALUES (%s, %s, %s, %s, %s, %s)",
+                (tid, event_type, message, actor, '{}', created_at)
             )
     conn.commit()
 
-    print(f"Database populated with {num_people} people, {num_groups} groups, {num_events} events, and {num_reaches} reaches!")
-    print(f"Real tags inserted: {', '.join(real_tags)}")
+    print(f"Populated {len(contact_ids)} contacts, {len(tags)} tags, {len(event_ids)} events, {len(ticket_ids)} tickets.")
+
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Create the database and optionally populate it with fake data."
-    )
-
-    parser.add_argument(
-        "dsn",
-        help="Database DSN (e.g. sqlite:/app/dgg-crm.db or postgresql://user:pass@host:5432/dbname)",
-    )
-
-    parser.add_argument(
-        "--num-people",
-        type=int,
-        default=50,
-        help="Number of people to generate (default: 50)",
-    )
-
-    parser.add_argument(
-        "--num-groups",
-        type=int,
-        default=5,
-        help="Number of groups to generate (default: 5)",
-    )
-
-    parser.add_argument(
-        "--num-events",
-        type=int,
-        default=15,
-        help="Number of events to generate (default: 15)",
-    )
-
-    parser.add_argument(
-        "--num-reaches",
-        type=int,
-        default=20,
-        help="Number of reaches to generate (default: 20)",
-    )
-
+    parser = argparse.ArgumentParser(description="Populate DB with fake data.")
+    parser.add_argument("dsn", help="Database DSN (sqlite:/..., postgresql://...)")
+    parser.add_argument("--num-contacts", type=int, default=50)
+    parser.add_argument("--num-events", type=int, default=15)
+    parser.add_argument("--num-tickets", type=int, default=30)
     return parser.parse_args()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = parse_args()
-
     conn = get_db_conn(args.dsn)
-
-    print("Populating with fake data...")
-    populate_with_fake_data(conn, num_people=args.num_people, num_groups=args.num_groups, num_events=args.num_events, num_reaches=args.num_reaches)
-
-    # Must close connection at end of program
+    populate_with_fake_data(conn, num_contacts=args.num_contacts, num_events=args.num_events, num_tickets=args.num_tickets)
     conn.close()
-    print("Database ready for testing!")
+    print("Fake data population complete!")

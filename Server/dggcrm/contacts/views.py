@@ -32,7 +32,8 @@ class ContactViewSet(viewsets.ModelViewSet):
                 Q(full_name__icontains=query) |
                 Q(email__icontains=query) |
                 Q(discord_id__icontains=query) |
-                Q(phone__icontains=query)
+                Q(phone__icontains=query) |
+                Q(note__icontains=query)
             )
 
         page = self.paginate_queryset(queryset)

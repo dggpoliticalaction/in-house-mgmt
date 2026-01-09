@@ -35,7 +35,57 @@ class Ticket(models.Model):
         help_text="Type for this ticket"
     )
 
-    # TODO: Fill out more fields from DB diagram
+    event = models.ForeignKey(
+        "events.Event",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="tickets",
+        help_text="Event this ticket relates to",
+    )
+
+    contact = models.ForeignKey(
+        "contacts.Contact",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="tickets",
+        help_text="Contact this ticket relates to",
+    )
+
+    assigned_to = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="tickets_assigned",
+        help_text="User ticket is assigned to",
+    )
+
+    reported_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="tickets_reported",
+        help_text="User that created this ticket",
+    )
+
+    title = models.CharField(max_length=100, blank=True)
+    description = models.TextField(blank=True)
+
+    class Priority(models.IntegerChoices):
+        P0 = 0, "P0 - Emergency (Do Now)"
+        P1 = 1, "P1 - Very High"
+        P2 = 2, "P2 - High"
+        P3 = 3, "P3 - Normal"
+        P4 = 4, "P4 - Low"
+        P5 = 5, "P5 - Very Low"
+
+    priority = models.PositiveSmallIntegerField(
+        choices=Priority.choices,
+        default=Priority.P3,
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)

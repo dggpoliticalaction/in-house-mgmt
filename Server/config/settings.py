@@ -148,3 +148,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "static/"
+
+# TODO: Move to local dev settings
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True

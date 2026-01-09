@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from .models import Event
+
+from django.contrib.auth import get_user_model
+
+from .models import Event, EventParticipation, UsersInEvent
+
+User = get_user_model()
+
 
 class EventSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(
@@ -9,13 +15,33 @@ class EventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Event
-        fields = [
-            'id',
-            'name',
-            'description',
-            'event_status',
-            'status_display',  # human-readable status
-            'created_at',
-            'modified_at',
-        ]
+        fields = "__all__"
         read_only_fields = ['id', 'created_at', 'modified_at', 'status_display']
+
+
+class EventParticipationSerializer(serializers.ModelSerializer):
+    status_display = serializers.CharField(
+        source="get_status_display",
+        read_only=True,
+    )
+
+    class Meta:
+        model = EventParticipation
+        fields = "__all__"
+        read_only_fields = ["id", "created_at", "modified_at", "status_display"]
+
+
+class UsersInEventSerializer(serializers.ModelSerializer):
+    user_username = serializers.CharField(
+        source="user.username",
+        read_only=True,
+    )
+
+    class Meta:
+        model = UsersInEvent
+        fields = "__all__"
+        read_only_fields = [
+            "id",
+            "joined_at",
+            "user_username",
+        ]

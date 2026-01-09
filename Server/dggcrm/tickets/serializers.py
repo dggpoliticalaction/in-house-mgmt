@@ -13,19 +13,23 @@ class TicketSerializer(serializers.ModelSerializer):
         source='get_ticket_type_display',
         read_only=True
     )
+    assigned_to_username = serializers.CharField(
+        source='assigned_to.username',
+        read_only=True
+    )
+    reported_by_username = serializers.CharField(
+        source='reported_by.username',
+        read_only=True
+    )
+    priority_display = serializers.CharField(
+        source='get_priority_display',
+        read_only=True
+    )
 
     class Meta:
         model = Ticket
-        fields = [
-            'id',
-            'ticket_status',
-            'status_display',
-            'ticket_type',
-            'type_display',
-            'created_at',
-            'modified_at',
-        ]
-        read_only_fields = ['id', 'created_at', 'modified_at', 'status_display', 'type_display']
+        fields = "__all__"
+        read_only_fields = ['id', 'created_at', 'modified_at', 'status_display', 'type_display', 'assigned_to_username', 'reported_by_username', 'priority_display', 'reported_by']
 
 
 class TicketAuditlogSerializer(serializers.ModelSerializer):

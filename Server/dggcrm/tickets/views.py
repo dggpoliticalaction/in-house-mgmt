@@ -1,4 +1,5 @@
 from rest_framework import viewsets, filters
+from rest_framework.exceptions import APIException
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
@@ -17,19 +18,16 @@ class TicketViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_at', 'modified_at', 'ticket_status', 'ticket_type']
     ordering = ['-created_at']
 
-    @action(detail=False, methods=['get'], url_path='search')
-    def search(self, request):
-        """
-        GET /api/tickets/search/?q=keyword&status=OPEN&type=RECRUIT
-        Search tickets by optional filters
-        """
-        queryset = self.get_queryset()
-        q = request.query_params.get('q', '').strip()
-        status = request.query_params.get('status')
-        ticket_type = request.query_params.get('type')
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        q = self.request.query_params.get('q', '').strip()
+        status = self.request.query_params.get('status')
+        ticket_type = self.request.query_params.get('type')
+        priority = self.request.query_params.get('priority')
 
         if q:
-            queryset = queryset.filter(Q(id__icontains=q))
+            queryset = queryset.filter(Q(id__icontains=q) | Q(title__icontains=q) | Q(description__icontains=q))
 
         if status is not None:
             queryset = queryset.filter(ticket_status=status)
@@ -37,13 +35,17 @@ class TicketViewSet(viewsets.ModelViewSet):
         if ticket_type is not None:
             queryset = queryset.filter(ticket_type=ticket_type)
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+        if priority is not None:
+            try:
+                priority = int(priority)
+            except ValueError:
+                raise APIException(
+                    detail='Invalid priority in query',
+                    code=status.HTTP_400_BAD_REQUEST
+                )
+            queryset = queryset.filter(priority=priority)
 
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        return queryset
 
 
     @action(detail=True, methods=['post'], url_path='comment', serializer_class=TicketCommentSerializer)
@@ -67,6 +69,12 @@ class TicketViewSet(viewsets.ModelViewSet):
         # Return full audit log data
         return Response(TicketAuditlogSerializer(log, context={'request': request}).data, status=status.HTTP_201_CREATED)
 
+    def perform_create(self, serializer):
+        """
+        Automatically sets reported_by to the current authenticated user.
+        """
+        user = self.request.user
+        serializer.save(reported_by=user if user and user.is_authenticated else None)
 
 class TicketAuditlogViewSet(viewsets.ReadOnlyModelViewSet):
     """

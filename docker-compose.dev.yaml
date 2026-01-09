@@ -29,7 +29,7 @@ services:
       - ./Server/:/app
       - /app/.venv
     environment:
-      - INSERT_FAKE_DATA=false
+      - INSERT_FAKE_DATA=true
     env_file:
       - ./.envs/.dev/.postgres
     ports:

@@ -14,7 +14,7 @@ class Contact(models.Model):
     email = models.EmailField(blank=True)
     phone = models.CharField(max_length=50, blank=True)
 
-    # TODO: Fill out more fields from DB diagram
+    note = models.TextField(blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
@@ -24,7 +24,7 @@ class Contact(models.Model):
 
     def __str__(self):
         if self.discord_id:
-            return self.discord_displayname
+            return self.discord_id
         elif self.full_name:
             return self.full_name
 
@@ -70,6 +70,7 @@ class TagAssignments(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = 'tag_assignments'
         unique_together = [("contact", "tag")]
         indexes = [
             models.Index(fields=["contact"]),
