@@ -53,6 +53,7 @@ class EventParticipationViewSet(viewsets.ModelViewSet):
     ]
 
     search_fields = [
+        "contact",
         "contact__full_name",
         "contact__email",
         "notes",
