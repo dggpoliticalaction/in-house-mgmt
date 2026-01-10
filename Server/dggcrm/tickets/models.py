@@ -145,6 +145,6 @@ class TicketAuditlog(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.id} ({self.event_type})"
+        return f"{self.id}"
 
 # TODO: implement missing tables from DB diagram

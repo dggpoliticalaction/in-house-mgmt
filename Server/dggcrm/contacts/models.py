@@ -23,10 +23,10 @@ class Contact(models.Model):
         db_table = 'contacts'
 
     def __str__(self):
-        if self.discord_id:
-            return self.discord_id
-        elif self.full_name:
+        if self.full_name:
             return self.full_name
+        elif self.discord_id:
+            return self.discord_id
 
         return self.id
 

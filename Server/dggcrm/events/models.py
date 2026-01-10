@@ -36,7 +36,7 @@ class Event(models.Model):
         db_table = 'events'
 
     def __str__(self):
-        return f"{self.id} ({self.get_event_status_display()})"
+        return f"{self.name}"
 
 class CommitmentStatus(models.TextChoices):
     UNKNOWN = "UNKNOWN", "Unknown"
@@ -47,10 +47,6 @@ class CommitmentStatus(models.TextChoices):
     NO_SHOW = "NO_SHOW", "No Show"
 
 class EventParticipation(models.Model):
-    """
-    Connects a Contact to an Event with a commitment status.
-    """
-
     id = models.AutoField(primary_key=True)
 
     event = models.ForeignKey(
@@ -86,7 +82,7 @@ class EventParticipation(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.contact} -> {self.event} ({self.get_commitment_status_display()})"
+        return f"{self.contact} -> {self.event} ({self.get_status_display()})"
 
 
 class UsersInEvent(models.Model):
