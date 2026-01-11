@@ -1,7 +1,7 @@
 'use client';
 
 import { Table, Badge, Stack, Title, LoadingOverlay, Paper, Group, Text, Pagination, Center, HoverCard } from '@mantine/core';
-import { useState } from 'react';
+import { formatContact } from '../utils/helpers';
 
 export interface Person {
   id: number;
@@ -34,45 +34,10 @@ interface PeopleTableProps {
   onPageChange?: (page: number) => void;
 }
 
-interface AcceptanceStats {
-  person_did: string;
-  person_name: string;
-  accepted: number;
-  rejected: number;
-  total: number;
-  acceptance_percentage: number;
-}
-
-function TagWithStats({ tag, contact }: { tag: Tag; contact: Contact }) {
-  const [stats, setStats] = useState<AcceptanceStats | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [opened, setOpened] = useState(false);
-
-  // const fetchStats = async () => {
-  //   if (stats) return; // Already fetched
-  //   setLoading(true);
-  //   try {
-  //     const response = await fetch(`/api/people/${personDid}/acceptance-stats/`);
-  //     const data = await response.json();
-  //     setStats(data);
-  //   } catch (error) {
-  //     console.error('Error fetching acceptance stats:', error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+function TagWithStats({ tag }: { tag: Tag }) {
 
   return (
-    <HoverCard
-      width={280}
-      shadow="md"
-      opened={opened}
-      onOpen={() => {
-        setOpened(true);
-        // fetchStats();
-      }}
-      onClose={() => setOpened(false)}
-    >
+    <HoverCard width={280} shadow="md">
       <HoverCard.Target>
         <Badge size="sm" color={tag.color} style={{ cursor: 'pointer' }}>
           {tag.name}
@@ -81,23 +46,7 @@ function TagWithStats({ tag, contact }: { tag: Tag; contact: Contact }) {
       <HoverCard.Dropdown>
         <Stack gap="xs">
           <Text size="sm" fw={500}>{tag.name} - Acceptance Stats</Text>
-          {loading ? (
-            <Text size="xs" c="dimmed">Loading...</Text>
-          ) : stats ? (
-            <>
-              <Text size="xs" c="dimmed">
-                Accepted: {stats.accepted} ({stats.acceptance_percentage}%)
-              </Text>
-              <Text size="xs" c="dimmed">
-                Rejected: {stats.rejected}
-              </Text>
-              <Text size="xs" c="dimmed">
-                Total: {stats.total}
-              </Text>
-            </>
-          ) : (
-            <Text size="xs" c="dimmed">No data available</Text>
-          )}
+          <Text size="xs" c="dimmed">No data available</Text>
         </Stack>
       </HoverCard.Dropdown>
     </HoverCard>
@@ -113,13 +62,6 @@ export default function PeopleTable({
   totalPages = 1,
   onPageChange
 }: PeopleTableProps) {
-  const formatContact = (email: string | null, phone: string | null) => {
-    const parts = [];
-    if (email) parts.push(email);
-    if (phone) parts.push(phone);
-    return parts.length > 0 ? parts.join(' • ') : 'No contact info';
-  };
-
   return (
     <Paper p="md" withBorder style={{ position: 'relative', minHeight: '400px' }}>
       <LoadingOverlay visible={loading} />
@@ -159,7 +101,7 @@ export default function PeopleTable({
                     {person.tags && person.tags.length > 0 ? (
                       <Group gap="xs">
                         {person.tags.slice(0, 3).map((tag) => (
-                          <TagWithStats key={tag.id} tag={tag} person={person} />
+                          <TagWithStats key={tag.id} tag={tag} />
                         ))}
                         {person.tags.length > 3 && (
                           <Badge variant="dot" size="sm" c="dimmed">
