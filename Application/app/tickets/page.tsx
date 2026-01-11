@@ -224,7 +224,7 @@ export default function TicketPage() {
               </>
             ) : (
               <Paper p="md" withBorder style={{ position: 'relative', minHeight: '400px' }}>
-                // Show call instructions for selected reach
+                {/* Show call instructions for selected reach */}
                 <Stack gap="md">
                   <Title order={4}>Call Instructions</Title>
 

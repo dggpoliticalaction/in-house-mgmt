@@ -1,6 +1,26 @@
 import { type Organization } from '@/app/components/OrganizationsTable';
 import { type GroupMember } from '@/app/components/OrganizationMembersTable';
 import { type PersonWithRole } from '@/app/components/RolesTable';
+import { type UseFormReturnType } from '@mantine/form';
+
+// Form value types
+export interface AddOrgFormValues {
+  name: string;
+}
+
+export interface AddMemberFormValues {
+  person: string;
+  access_level: string;
+}
+
+export interface AccessLevelFormValues {
+  access_level: string;
+}
+
+export interface AssignRoleFormValues {
+  person: string;
+  access_level: string;
+}
 
 interface UseHandlersProps {
   // State setters
@@ -17,11 +37,11 @@ interface UseHandlersProps {
   setSubmitting: (submitting: boolean) => void;
 
   // Forms
-  addOrgForm: any;
-  addMemberForm: any;
-  editMemberForm: any;
-  assignRoleForm: any;
-  editRoleForm: any;
+  addOrgForm: UseFormReturnType<AddOrgFormValues>;
+  addMemberForm: UseFormReturnType<AddMemberFormValues>;
+  editMemberForm: UseFormReturnType<AccessLevelFormValues>;
+  assignRoleForm: UseFormReturnType<AssignRoleFormValues>;
+  editRoleForm: UseFormReturnType<AccessLevelFormValues>;
 
   // Fetch functions
   fetchOrganizations: () => Promise<void>;
@@ -72,7 +92,7 @@ export function useAdminHandlers(props: UseHandlersProps) {
     setAddOrgOpen(true);
   };
 
-  const handleSubmitOrganization = async (values: any) => {
+  const handleSubmitOrganization = async (values: AddOrgFormValues) => {
     setSubmitting(true);
     try {
       const response = await fetch('/api/groups/', {
@@ -129,7 +149,7 @@ export function useAdminHandlers(props: UseHandlersProps) {
     setAddMemberOpen(true);
   };
 
-  const handleSubmitAddMember = async (values: any) => {
+  const handleSubmitAddMember = async (values: AddMemberFormValues) => {
     if (!selectedOrg) return;
 
     setSubmitting(true);
@@ -164,7 +184,7 @@ export function useAdminHandlers(props: UseHandlersProps) {
     setEditMemberOpen(true);
   };
 
-  const handleSubmitEditMember = async (values: any) => {
+  const handleSubmitEditMember = async (values: AccessLevelFormValues) => {
     if (!selectedMember || !selectedOrg) return;
 
     setSubmitting(true);
@@ -219,7 +239,7 @@ export function useAdminHandlers(props: UseHandlersProps) {
     setAssignRoleOpen(true);
   };
 
-  const handleSubmitAssignRole = async (values: any) => {
+  const handleSubmitAssignRole = async (values: AccessLevelFormValues) => {
     if (!selectedPerson) return;
 
     setSubmitting(true);
@@ -252,7 +272,7 @@ export function useAdminHandlers(props: UseHandlersProps) {
     setEditRoleOpen(true);
   };
 
-  const handleSubmitEditRole = async (values: any) => {
+  const handleSubmitEditRole = async (values: AccessLevelFormValues) => {
     if (!selectedPerson || !selectedPerson.role_id) return;
 
     setSubmitting(true);
