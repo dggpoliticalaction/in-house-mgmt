@@ -1,31 +1,6 @@
 *This ReadMe Should be updated with the expectations shortly after being launches for issue workk*
 
-# How to run:
-## Local
-This will run on your local machine but outside a docker container.
-### Pre-reqs
-* Python (tested on 3.13), 
-* Node (tested on version 20.19) 
-### Backend
-* Install libpq: `brew install libpq`
-* CD into `Server`
-* Create venv: `python3 -m venv .venv`
-* Activate venv: `source .venv/bin/activate`
-* Install dependencies: `PATH="/opt/homebrew/opt/libpq/bin:$PATH" pip install -r requirements.txt`
-* Start PostgreSQL: `docker compose -f ../docker-compose.dev.yaml up postgres -d`
-    * This starts up postgres in the docker container 
-* Load env vars: `source ../.envs/.dev/.server`
-* Run `python manage.py migrate`
-* Run server: `python manage.py runserver 8080`
-    * The program will not work given a different port (8080)
-
-### Frontend 
-* From root run `source .envs/.dev/.application`
-    * This loads in the env variables necessary to locally run the frontend
-* Go to application folder
-* run `npm install` to install dependencies
-* run `npm run dev` to start the program
-
+# How to run
 ## Docker
 
 If you prefer, it's also possible to bring up the dev stack using docker. You can run the following from the root of this repo:
