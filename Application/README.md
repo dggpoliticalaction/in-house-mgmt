@@ -48,28 +48,20 @@ npm run test:coverage
 
 ### Writing Tests
 
-Test files should be placed next to the code they test with a `.test.ts` or `.test.tsx` extension:
+Test files should be placed next to the code they test with a `.test.ts` or `.test.tsx` extension.
 
-```
-app/
-  utils/
-    helpers.ts
-    helpers.test.ts
-```
-
-For pure functions (recommended approach):
+For unit tests:
 ```typescript
 import { describe, it, expect } from 'vitest';
-import { myFunction } from './helpers';
 
 describe('myFunction', () => {
   it('returns expected value', () => {
-    expect(myFunction(input)).toBe(expectedOutput);
+    expect(1 + 1).toBe(2);
   });
 });
 ```
 
-For component tests (when needed), use the custom render from `test-utils/render.tsx` which includes MantineProvider:
+For component tests, use the custom render from `test-utils/render.tsx` which includes MantineProvider:
 
 ```tsx
 import { render, screen } from '../../test-utils/render';
