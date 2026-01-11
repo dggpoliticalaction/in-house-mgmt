@@ -64,11 +64,7 @@ describe('myFunction', () => {
 For component tests, use the custom render from `test-utils/render.tsx` which includes MantineProvider:
 
 ```tsx
-<<<<<<< HEAD
-import { render, screen } from '../../test-utils/render';
-=======
 import { render, screen } from '../test-utils/render';
->>>>>>> 058e848 (remove bug fixes and ci run)
 import MyComponent from './MyComponent';
 
 describe('MyComponent', () => {
@@ -77,17 +73,6 @@ describe('MyComponent', () => {
     expect(screen.getByText('Hello')).toBeInTheDocument();
   });
 });
-```
-
-### Browser Testing (Future)
-
-Browser tests using Vitest browser mode can be set up when needed:
-
-```bash
-# View setup instructions
-npm run test:browser:setup
-
-# After setup, browser tests use .browser.test.ts suffix
 ```
 
 ## Deploy on Vercel

@@ -9,9 +9,7 @@
     "lint": "eslint",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "test:browser": "echo 'Browser tests require @vitest/browser and playwright. Run: npm install -D @vitest/browser playwright' && exit 1",
-    "test:browser:setup": "echo 'Install browser testing: npm install -D @vitest/browser playwright && npx playwright install chromium'"
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@mantine/core": "^8.3.10",

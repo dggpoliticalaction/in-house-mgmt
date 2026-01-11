@@ -1,7 +1,6 @@
 'use client';
 
 import { Table, Badge, Stack, Title, LoadingOverlay, Paper, Group, Text, Pagination, Center } from '@mantine/core';
-import { formatDate } from '../utils/helpers';
 
 export interface Participant {
   did: string;
@@ -46,6 +45,20 @@ export default function EventsTable({
   totalPages = 1,
   onPageChange
 }: EventsTableProps) {
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'No date';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
   return (
     <Paper p="md" withBorder style={{ position: 'relative', minHeight: '400px' }}>
       <LoadingOverlay visible={loading} />

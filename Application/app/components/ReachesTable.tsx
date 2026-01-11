@@ -1,15 +1,11 @@
 'use client';
 
 import { Table, Badge, Stack, Title, LoadingOverlay, Paper } from '@mantine/core';
-import { getPriorityColor, getStatusColor } from '../utils/helpers';
 
 // TODO: Rename to Ticket
 export interface Reach {
   id: number;
   tiket_status: number;
-  ticket_status: string;
-  status_display: string;
-  type_display: string;
   contact: string | null;
   title: string;
   description: string;
@@ -26,6 +22,26 @@ interface ReachesTableProps {
   onRowClick?: (reach: Reach) => void;
   showTitle?: boolean;
 }
+
+const getPriorityColor = (priority: number) => {
+  if (priority < 1) return 'red';
+  if (priority < 3) return 'orange';
+  if (priority == 3) return 'yellow';
+  if (priority <= 5) return 'gray';
+  return 'gray';
+};
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'OPEN': return 'gray';
+    case 'TODO': return 'gray';
+    case 'IN_PROGRESS': return 'blue';
+    case 'BLOCKED': return 'red';
+    case 'COMPLETED': return 'DimGray';
+    case 'CANCELED': return 'red';
+    default: return 'DimGray';
+  }
+};
 
 export default function ReachesTable({
   reaches,

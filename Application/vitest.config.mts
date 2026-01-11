@@ -21,12 +21,5 @@ export default defineConfig({
         'vitest.setup.ts',
       ],
     },
-
-    // Browser mode config (enable when ready):
-    // browser: {
-    //   provider: playwright(),
-    //   enabled: true,
-    //   instances: [{ browser: 'chromium' }]
-    // }
   },
 });
