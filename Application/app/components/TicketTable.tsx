@@ -1,29 +1,17 @@
 'use client';
 
 import { Table, Badge, Stack, Title, LoadingOverlay, Paper } from '@mantine/core';
+import { useRouter } from 'next/navigation';
+import { Ticket } from './ticket-utils';
 
-// TODO: Rename to Ticket
-export interface Reach {
-  id: number;
-  tiket_status: number;
-  contact: string | null;
-  title: string;
-  description: string;
-  ticket_type: string;
-  priority: number;
-  created_at: string;
-  modified_at: string;
-}
-
-// TODO: Rename to TicketTableProbs
-interface ReachesTableProps {
-  reaches: Reach[];
+interface TicketTableProps {
+  tickets: Ticket[];
   loading?: boolean;
-  onRowClick?: (reach: Reach) => void;
+  onRowClick?: (reach: Ticket) => void;
   showTitle?: boolean;
 }
 
-const getPriorityColor = (priority: number) => {
+export const getPriorityColor = (priority: number) => {
   if (priority < 1) return 'red';
   if (priority < 3) return 'orange';
   if (priority == 3) return 'yellow';
@@ -31,7 +19,7 @@ const getPriorityColor = (priority: number) => {
   return 'gray';
 };
 
-const getStatusColor = (status: string) => {
+export const getStatusColor = (status: string) => {
   switch (status) {
     case 'OPEN': return 'gray';
     case 'TODO': return 'gray';
@@ -43,17 +31,19 @@ const getStatusColor = (status: string) => {
   }
 };
 
-export default function ReachesTable({
-  reaches,
+export default function TicketTable({
+  tickets: tickets,
   loading = false,
   onRowClick,
   showTitle = true
-}: ReachesTableProps) {
+}: TicketTableProps) {
+  const router = useRouter()
+
   return (
     <Paper p="md" withBorder style={{ position: 'relative', minHeight: '400px' }}>
       <LoadingOverlay visible={loading} />
       <Stack gap="md">
-        {showTitle && <Title order={4}>Available Reaches</Title>}
+        {showTitle && <Title order={4}>Available Tickets</Title>}
         <Table highlightOnHover>
           <Table.Thead>
             <Table.Tr>
@@ -66,28 +56,28 @@ export default function ReachesTable({
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {reaches.map((reach) => (
+            {tickets.map((ticket) => (
               <Table.Tr
-                key={reach.id}
-                onClick={() => onRowClick?.(reach)}
+                key={ticket.id}
+                onClick={() => router.push(`/tickets/${ticket.id}`)}
                 style={{ cursor: onRowClick ? 'pointer' : 'default' }}
               >
-                <Table.Td>{reach.id}</Table.Td>
-                <Table.Td>{reach.title}</Table.Td>
+                <Table.Td>{ticket.id}</Table.Td>
+                <Table.Td>{ticket.title}</Table.Td>
                 <Table.Td>
-                  <Badge variant="light">{reach.type_display}</Badge>
+                  <Badge variant="light">{ticket.type_display}</Badge>
                 </Table.Td>
                 <Table.Td>
-                  <Badge color={getPriorityColor(reach.priority)}>
-                    P{reach.priority}
+                  <Badge color={getPriorityColor(ticket.priority)}>
+                    P{ticket.priority}
                   </Badge>
                 </Table.Td>
                 <Table.Td>
-                  <Badge color={getStatusColor(reach.ticket_status)}>
-                    {reach.status_display}
+                  <Badge color={getStatusColor(ticket.ticket_status)}>
+                    {ticket.status_display}
                   </Badge>
                 </Table.Td>
-                <Table.Td>{reach.contact || 'Unassigned'}</Table.Td>
+                <Table.Td>{ticket.contact || 'Unassigned'}</Table.Td>
               </Table.Tr>
             ))}
           </Table.Tbody>
