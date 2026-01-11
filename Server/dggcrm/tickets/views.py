@@ -61,11 +61,16 @@ class TicketViewSet(viewsets.ModelViewSet):
         qs = (
             Ticket.objects
             .filter(
-                created_at__gte=min_date,
-                created_at__lte=max_date,
                 contact__isnull=False,
             )
         )
+
+        # Query date ranges
+        if min_date:
+            qs.filter(created_at__gte=min_date)
+        if max_date:
+            qs.filter(created_at__lte=max_date)
+
 
         if ticket_type:
             qs = qs.filter(ticket_type=type)

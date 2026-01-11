@@ -96,10 +96,16 @@ class EventParticipationViewSet(viewsets.ModelViewSet):
         status = request.query_params.get("status", CommitmentStatus.ATTENDED)
 
         qs = EventParticipation.objects.filter(
-            event__ends_at__gte=min_date,
-            event__starts_at__lte=max_date,
             status=status,
-        ).values(
+        )
+
+        # Query date ranges
+        if min_date:
+            qs.filter(event__ends_at__gte=min_date)
+        if max_date:
+            qs.filter(event__starts_at__lte=max_date)
+
+        qs = qs.values(
             "contact_id",
             full_name=F("contact__full_name"),
         ).annotate(
