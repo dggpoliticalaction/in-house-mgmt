@@ -28,12 +28,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # TODO: Enable these checks once codebase type errors are fixed
-      # - name: Run linter
-      #   run: npm run lint
+      - name: Run linter
+        run: npm run lint
 
-      # - name: Run tests
-      #   run: npm run test:run
+      - name: Run tests
+        run: npm run test:run
 
       - name: Verify test infrastructure
         run: echo "Test infrastructure installed successfully"
