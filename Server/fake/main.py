@@ -71,6 +71,14 @@ def populate_with_fake_data(conn, num_contacts=50, num_events=15, num_tickets=30
         description = fake.text(max_nb_chars=200)
         event_status = random.choice(['draft', 'scheduled', 'completed', 'canceled'])  # 
 
+        location_name, location_address = None, None
+        # 50/50 chance each gets added
+        if random.choice([True, False]):
+            location_address = fake.address()
+        if random.choice([True, False]):
+            # Second is name of the place
+            location_name = fake.location_on_land()[2]
+
         # Timestamps
         created_at = fake.date_time_between(start_date='-1y', end_date='now')
         modified_at = created_at + timedelta(days=random.randint(0, 10))
@@ -83,7 +91,7 @@ def populate_with_fake_data(conn, num_contacts=50, num_events=15, num_tickets=30
             (name, description, event_status, location_name, location_address, created_at, modified_at, starts_at, ends_at)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
             """,
-            (name, description, event_status, '', '123 Main St', created_at, modified_at, starts_at, ends_at)
+            (name, description, event_status, location_name, location_address, created_at, modified_at, starts_at, ends_at)
         )
         event_ids.append(c.fetchone()[0])
     conn.commit()
