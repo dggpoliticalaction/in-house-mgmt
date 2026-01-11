@@ -132,6 +132,8 @@ def populate_with_fake_data(conn, num_contacts=50, num_events=15, num_tickets=30
     for _ in range(num_tickets):
         name = fake.catch_phrase()
         description = fake.text(max_nb_chars=200)
+        event = random.choice(event_ids + [None])
+        contact = random.choice(contact_ids + [None])
         ticket_status = random.choice(['OPEN','TODO','IN_PROGRESS','BLOCKED','COMPLETED','CANCELED'])
         ticket_type = random.choice(['UNKNOWN', 'INTRODUCTION', 'RECURIT', 'CONFIRM'])
         priority = random.choice([i for i in range(6)])
@@ -140,9 +142,9 @@ def populate_with_fake_data(conn, num_contacts=50, num_events=15, num_tickets=30
         created_at = fake.date_time_between(start_date='-1y', end_date='now')
         modified_at = created_at + timedelta(days=random.randint(0,5))
         c.execute(
-            "INSERT INTO tickets (title, description, ticket_status, ticket_type, assigned_to_id, reported_by_id, priority, created_at, modified_at) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
-            (name, description, ticket_status, ticket_type, assigned_to, reported_by, priority, created_at, modified_at)
+            "INSERT INTO tickets (title, description, ticket_status, ticket_type, event_id, contact_id, assigned_to_id, reported_by_id, priority, created_at, modified_at) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
+            (name, description, ticket_status, ticket_type, event, contact, assigned_to, reported_by, priority, created_at, modified_at)
         )
         ticket_ids.append(c.fetchone()[0])
     conn.commit()

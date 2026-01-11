@@ -4,9 +4,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 
-from django.db.models import Q
+from django.db.models import Count, Q, F
 
-from .models import Ticket, TicketAuditlog, TypeTicketLog
+from .models import Ticket, TicketStatus, TicketType, TicketAuditlog, TypeTicketLog
 from .serializers import TicketSerializer, TicketAuditlogSerializer, TicketCommentSerializer
 
 # TODO: Handle permissions for views in file
@@ -47,6 +47,50 @@ class TicketViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    # TODO: Limit this API to organizer role or above
+    @action(detail=False, methods=["get"])
+    def group_by_contact(self, request):
+        min_date = request.query_params.get("min_date")
+        max_date = request.query_params.get("max_date")
+        min_tickets = int(request.query_params.get("min_tickets", 0))
+        max_tickets = request.query_params.get("max_tickets")
+
+        ticket_status = self.request.query_params.get("status", TicketStatus.COMPLETED)
+        ticket_type = request.query_params.get("type")
+
+        qs = (
+            Ticket.objects
+            .filter(
+                created_at__gte=min_date,
+                created_at__lte=max_date,
+                contact__isnull=False,
+            )
+        )
+
+        if ticket_type:
+            qs = qs.filter(ticket_type=type)
+
+        qs = (
+            qs.values("contact_id", full_name=F("contact__full_name"))
+            .annotate(
+                ticket_count=Count(
+                    "id",
+                    filter=Q(ticket_status=ticket_status),
+                )
+            )
+            .filter(ticket_count__gte=min_tickets)
+            .order_by("-ticket_count", "contact_id")
+        )
+
+        if max_tickets is not None:
+            qs = qs.filter(ticket_count__lte=int(max_tickets))
+
+
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            return self.get_paginated_response(page)
+
+        return Response(qs)
 
     @action(detail=True, methods=['post'], url_path='comment', serializer_class=TicketCommentSerializer)
     def comment(self, request, pk=None):
@@ -68,6 +112,8 @@ class TicketViewSet(viewsets.ModelViewSet):
 
         # Return full audit log data
         return Response(TicketAuditlogSerializer(log, context={'request': request}).data, status=status.HTTP_201_CREATED)
+
+
 
     def perform_create(self, serializer):
         """
