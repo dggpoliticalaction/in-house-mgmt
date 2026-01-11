@@ -1,9 +1,9 @@
 from rest_framework import viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import Q
+from django.db.models import Count, Q, F
 
-from .models import Event, EventParticipation, UsersInEvent
+from .models import Event, EventParticipation, UsersInEvent, CommitmentStatus
 from .serializers import EventSerializer, EventParticipationSerializer, UsersInEventSerializer
 
 
@@ -65,6 +65,68 @@ class EventParticipationViewSet(viewsets.ModelViewSet):
     ]
 
     ordering = ["-created_at"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        q = self.request.query_params.get('q', '').strip()
+
+        event_id = self.request.query_params.get("event")
+        contact_id = self.request.query_params.get("contact")
+        status = self.request.query_params.get("status")
+
+        if event_id:
+            queryset = queryset.filter(event_id=event_id)
+
+        if contact_id:
+            queryset = queryset.filter(contact_id=contact_id)
+
+        if status:
+            queryset = queryset.filter(status=status)
+
+        return queryset
+
+    # TODO: Limit this API to organizer role or above
+    @action(detail=False, methods=["get"])
+    def group_by_contact(self, request):
+        min_date = request.query_params.get("min_date")
+        max_date = request.query_params.get("max_date")
+        min_events = request.query_params.get("min_events", 0)
+        max_events = request.query_params.get("max_events")
+        status = request.query_params.get("status", CommitmentStatus.ATTENDED)
+
+        qs = EventParticipation.objects.filter(
+            status=status,
+        )
+
+        # Query date ranges
+        if min_date:
+            qs.filter(event__ends_at__gte=min_date)
+        if max_date:
+            qs.filter(event__starts_at__lte=max_date)
+
+        qs = qs.values(
+            "contact_id",
+            full_name=F("contact__full_name"),
+        ).annotate(
+            event_count=Count(
+                "id",
+            )
+        )
+
+        qs = (
+            qs.filter(event_count__gte=min_events)
+                .order_by("-event_count", "contact_id")
+        )
+
+        if max_events is not None:
+            qs = qs.filter(event_count__lte=max_events)
+
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            return self.get_paginated_response(page)
+
+        return Response(qs)
 
 
 class UsersInEventViewSet(viewsets.ModelViewSet):
