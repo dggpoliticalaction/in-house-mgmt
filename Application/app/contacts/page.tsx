@@ -115,6 +115,7 @@ export default function PeoplePage() {
     setSearchQuery('');
     setSelectedGroup('all');
     setSelectedTag('all');
+    fetchPeople();
   };
 
   const handleRowClick = (person: Person) => {
