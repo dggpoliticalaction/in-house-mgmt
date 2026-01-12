@@ -18,7 +18,7 @@ import {
 } from '@mantine/core';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
-import ReachesTable, { type Reach } from '@/app/components/ReachesTable';
+import TicketTable, { type Reach } from '@/app/components/TicketTable';
 import VolunteerSearch from '@/app/components/VolunteerSearch';
 
 // TODO: /tickets/123 doesn't work, we should make sure the url reflects the current ticket
@@ -67,39 +67,6 @@ export default function TicketPage() {
     setSelectedReach(null);
   };
 
-  const handleUpdateStatus = async (newStatus: number, statusName: string) => {
-    if (!selectedReach) return;
-
-    try {
-      const response = await fetch(`/api/tickets/${selectedReach.id}/`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          status: newStatus
-        })
-      });
-
-      if (response.ok) {
-        const updatedReach = await response.json();
-
-        // Update the selected reach
-        setSelectedReach(updatedReach);
-
-        // Update the reach in the reaches list
-        setReaches(reaches.map(r =>
-          r.id === updatedReach.id ? updatedReach : r
-        ));
-      } else {
-        const error = await response.json();
-        alert(`Error updating status: ${JSON.stringify(error)}`);
-      }
-    } catch (error) {
-      console.error('Error updating reach status:', error);
-      alert(`Failed to update status to ${statusName}`);
-    }
-  };
 
   // TODO: Use code in ReachesTable.tsx
   const getPriorityColor = (priority: number) => {
@@ -188,11 +155,10 @@ export default function TicketPage() {
               </Paper>
             )}
 
-            {/* Reaches Table or Call Instructions */}
-            {!selectedReach ? (
+            {/* Tickets Table or Call Instructions */}
               <>
-                <ReachesTable
-                  reaches={reaches}
+                <TicketTable
+                  tickets={reaches}
                   loading={loading}
                   onRowClick={handleRowClick}
                 />
@@ -222,123 +188,9 @@ export default function TicketPage() {
                   </Group>
                 </Paper>
               </>
-            ) : (
-              <Paper p="md" withBorder style={{ position: 'relative', minHeight: '400px' }}>
-                {/* Show call instructions for selected reach */}
-                <Stack gap="md">
-                  <Title order={4}>Call Instructions</Title>
-
-                  <Box>
-                    <Text size="sm" c="dimmed" mb="xs">Description</Text>
-                    <Paper p="md" bg="gray.0" style={{ borderRadius: '4px' }}>
-                      <Text size="sm" style={{ whiteSpace: 'pre-wrap' }}>
-                        {selectedReach.description}
-                      </Text>
-                    </Paper>
-                  </Box>
-
-                  <ol style={{ paddingLeft: '1.5rem' }}>
-                    <li>Review the reach details and requirements</li>
-                    <li>Contact the assigned person or team</li>
-                    <li>Discuss the reach objectives and timeline</li>
-                    <li>Update the reach status based on the outcome</li>
-                    <li>Mark follow-up actions if needed</li>
-                  </ol>
-
-
-                </Stack>
-              </Paper>
-            )}
-
             {/* Activity Section - Only show when reach is selected */}
-            {selectedReach && (
-              <Paper p="md" withBorder>
-                <Title order={4} mb="md">Activity (Dummy)</Title>
-                <Timeline active={2} bulletSize={24} lineWidth={2}>
-                  <Timeline.Item title="Reach updated">
-                    <Text c="dimmed" size="sm">admin (admin@test.com)</Text>
-                    <Text size="xs" mt={4}>Dec 31, 16:29</Text>
-                  </Timeline.Item>
-                  <Timeline.Item title="Status updated to In Progress">
-                    <Text c="dimmed" size="sm">admin (admin@test.com)</Text>
-                    <Text size="xs" mt={4}>Dec 31, 16:27</Text>
-                  </Timeline.Item>
-                  <Timeline.Item title="Reach assigned">
-                    <Text c="dimmed" size="sm">System</Text>
-                    <Text size="xs" mt={4}>Dec 31, 16:05</Text>
-                  </Timeline.Item>
-                </Timeline>
-              </Paper>
-            )}
           </Stack>
         </Grid.Col>
-
-        {/* Sidebar - Only show when reach is selected */}
-        {selectedReach && (
-          <Grid.Col span={{ base: 12, md: 4 }}>
-            <Stack gap="md">
-              {/* Status Info */}
-              <Paper p="md" withBorder>
-                <Stack gap="sm">
-                  <Box>
-                    <Text size="sm" c="dimmed">Status</Text>
-                    <Badge variant="filled" color={getStatusColor(selectedReach.ticket_status)} mt={4}>
-                      {selectedReach.status_display}
-                    </Badge>
-                  </Box>
-                  <Divider />
-                  <Box>
-                    <Text size="sm" c="dimmed">Priority</Text>
-                    <Badge variant="light" color={getPriorityColor(selectedReach.priority)} mt={4}>
-                      P{selectedReach.priority}
-                    </Badge>
-                  </Box>
-                  <Divider />
-                  <Box>
-                    <Text size="sm" c="dimmed">Type</Text>
-                    <Text size="sm" mt={4}>{selectedReach.type_display}</Text>
-                  </Box>
-                  <Divider />
-                  <Box>
-                    <Text size="sm" c="dimmed">Assigned To</Text>
-                    <Text size="sm" mt={4}>{selectedReach.contact || 'Unassigned'}</Text>
-                  </Box>
-                  <Divider />
-                  <Box>
-                    <Text size="sm" c="dimmed">Reach ID</Text>
-                    <Text size="sm" mt={4}>#{selectedReach.id}</Text>
-                  </Box>
-                </Stack>
-              </Paper>
-
-              {/* Actions */}
-              <Paper p="md" withBorder>
-                <Title order={5} mb="md">Actions</Title>
-                <Stack gap="xs">
-                  <Button
-                    fullWidth
-                    variant="filled"
-                    color="red"
-                    onClick={() => handleUpdateStatus(3, 'Blocked')}
-                  >
-                    Mark as Blocked
-                  </Button>
-                  <Button
-                    fullWidth
-                    variant="outline"
-                    color="gray"
-                    onClick={() => handleUpdateStatus(4, 'Completed')}
-                  >
-                    Close Reach
-                  </Button>
-                </Stack>
-              </Paper>
-
-              {/* Volunteer Search and Responses */}
-              <VolunteerSearch reachId={selectedReach.id} />
-            </Stack>
-          </Grid.Col>
-        )}
       </Grid>
     </Container>
   );
