@@ -11,21 +11,16 @@ class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all().order_by('-created_at')
     serializer_class = EventSerializer
     filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-    search_fields = ['name', 'description']
+    search_fields = ['name', 'description', 'location_name', 'location_address']
     ordering_fields = ['created_at', 'modified_at', 'event_status']
     ordering = ['-created_at']
 
     def get_queryset(self):
         queryset = super().get_queryset()
 
-        q = self.request.query_params.get('q', '').strip()
-
         event_id = self.request.query_params.get("event")
         contact_id = self.request.query_params.get("contact")
         status = self.request.query_params.get("status")
-
-        if q:
-            queryset = queryset.filter(Q(name__icontains=q) | Q(description__icontains=q))
 
         if event_id:
             queryset = queryset.filter(event_id=event_id)
@@ -34,7 +29,33 @@ class EventViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(contact_id=contact_id)
 
         if status:
-            queryset = queryset.filter(status=status)
+            queryset = queryset.filter(event_status=status)
+
+        return queryset
+
+class EventViewSet(viewsets.ModelViewSet):
+    queryset = Event.objects.all().order_by('-created_at')
+    serializer_class = EventSerializer
+    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
+    search_fields = ['name', 'description', 'location_name', 'location_address']
+    ordering_fields = ['created_at', 'modified_at', 'event_status']
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        event_id = self.request.query_params.get("event")
+        contact_id = self.request.query_params.get("contact")
+        status = self.request.query_params.get("status")
+
+        if event_id:
+            queryset = queryset.filter(event_id=event_id)
+
+        if contact_id:
+            queryset = queryset.filter(contact_id=contact_id)
+
+        if status:
+            queryset = queryset.filter(event_status=status)
 
         return queryset
 
@@ -68,8 +89,6 @@ class EventParticipationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-
-        q = self.request.query_params.get('q', '').strip()
 
         event_id = self.request.query_params.get("event")
         contact_id = self.request.query_params.get("contact")
