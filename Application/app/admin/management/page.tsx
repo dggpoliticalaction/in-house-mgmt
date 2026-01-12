@@ -31,6 +31,12 @@ interface Person {
   phone: string | null;
 }
 
+interface GeneralRole {
+  id: number;
+  person: string;
+  access_level: number;
+}
+
 export default function ManagementConsole() {
   // Data states
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -190,7 +196,7 @@ export default function ManagementConsole() {
       const rolesArray = rolesData.results || [];
 
       const peopleWithRoles = peopleArray.map((person: Person) => {
-        const role = rolesArray.find((r: any) => r.person === person.did);
+        const role = rolesArray.find((r: GeneralRole) => r.person === person.did);
         return {
           did: person.did,
           name: person.name,
@@ -222,8 +228,8 @@ export default function ManagementConsole() {
 
       const results = data.results || [];
 
-      // If it's the first page or a new search, replace the list
-      // Otherwise, append to existing list for "load more" functionality
+      {/* If it's the first page or a new search, replace the list
+      // Otherwise, append to existing list for "load more" functionality */}
       if (page === 1) {
         setAllPeople(results);
       } else {

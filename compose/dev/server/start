@@ -6,6 +6,22 @@ set -o nounset
 
 echo "Starting server..."
 
+# Set default environment variables for local development
+if [ -z "${DATABASE_URL:-}" ]; then
+    export DATABASE_URL="postgres://tiny:password@localhost:5432/dggcrm"
+    echo "Using default DATABASE_URL: ${DATABASE_URL}"
+fi
+
+if [ -z "${CREATE_SUPER_USER:-}" ]; then
+    export CREATE_SUPER_USER="false"
+    echo "Using default CREATE_SUPER_USER: ${CREATE_SUPER_USER}"
+fi
+
+if [ -z "${INSERT_FAKE_DATA:-}" ]; then
+    export INSERT_FAKE_DATA="false"
+    echo "Using default INSERT_FAKE_DATA: ${INSERT_FAKE_DATA}"
+fi
+
 # Run migrations before starting server
 python manage.py migrate
 
