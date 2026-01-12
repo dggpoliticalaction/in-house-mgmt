@@ -14,20 +14,20 @@ class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all().order_by('-created_at')
     serializer_class = TicketSerializer
     filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-    search_fields = ['id'] # TODO: Add more fields
+    search_fields = ['id', 'title']
     ordering_fields = ['priority', 'created_at', 'modified_at', 'ticket_status', 'ticket_type', ]
     ordering = ['priority', '-created_at']
 
     def get_queryset(self):
         queryset = super().get_queryset()
 
-        q = self.request.query_params.get('q', '').strip()
         status = self.request.query_params.get('status')
         ticket_type = self.request.query_params.get('type')
         priority = self.request.query_params.get('priority')
-
-        if q:
-            queryset = queryset.filter(Q(id__icontains=q) | Q(title__icontains=q) | Q(description__icontains=q))
+        assigned_to_id = self.request.query_params.get('assigned_to')
+        reported_by_id = self.request.query_params.get('reported_by')
+        event_id = self.request.query_params.get('event')
+        contact_id = self.request.query_params.get('contact')
 
         if status is not None:
             queryset = queryset.filter(ticket_status=status)
@@ -44,6 +44,15 @@ class TicketViewSet(viewsets.ModelViewSet):
                     code=status.HTTP_400_BAD_REQUEST
                 )
             queryset = queryset.filter(priority=priority)
+
+        if assigned_to_id is not None:
+            queryset = queryset.filter(assigned_to=assigned_to_id)
+        if reported_by_id is not None:
+            queryset = queryset.filter(reported_by=reported_by_id)
+        if event_id is not None:
+            queryset = queryset.filter(event=event_id)
+        if contact_id is not None:
+            queryset = queryset.filter(contact=contact_id)
 
         return queryset
 
