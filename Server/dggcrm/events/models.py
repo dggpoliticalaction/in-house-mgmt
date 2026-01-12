@@ -32,6 +32,14 @@ class Event(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
 
+    @property
+    def location_display(self):
+        if self.location_name:
+            return f"{self.location_name}"
+        elif self.location_address:
+            return f"{self.location_address}"
+        return "None"
+
     class Meta:
         db_table = 'events'
 
