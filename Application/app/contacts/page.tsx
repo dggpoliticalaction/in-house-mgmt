@@ -11,17 +11,17 @@ import {
   Stack,
   Modal,
   MultiSelect,
-  ActionIcon,
-  Collapse
+  ActionIcon
 } from '@mantine/core';
-import { IconPlus, IconFileUpload, IconSearch, IconChevronLeft, IconChevronRight, IconX } from '@tabler/icons-react';
-import { useState, useEffect, useRef } from 'react';
+import { IconPlus, IconFileUpload, IconSearch, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
+import { useState, useEffect } from 'react';
 import { useForm } from '@mantine/form';
+import { useRouter } from 'next/navigation';
 import PeopleTable, { type Person, type Group as PersonGroup, type Tag } from '@/app/components/PeopleTable';
-import ContactPage from './contactDetailPage';
 import './page.css';
 
 export default function PeoplePage() {
+  const router = useRouter();
   const [people, setPeople] = useState<Person[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,8 +34,6 @@ export default function PeoplePage() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
-  const contactDetailRef = useRef<HTMLDivElement>(null);
 
   const form = useForm({
     initialValues: {
@@ -122,10 +120,7 @@ export default function PeoplePage() {
   };
 
   const handleRowClick = (person: Person) => {
-    setSelectedPerson(person);
-    setTimeout(() => {
-      contactDetailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
+    router.push(`/contacts/${person.id}`);
   };
 
   const handleAddPerson = () => {
@@ -231,9 +226,6 @@ export default function PeoplePage() {
           </Stack>
         </Paper>
 
-        {/* Contact Detail View */}
-
-
         {/* People Table */}
         <PeopleTable
           people={people}
@@ -241,30 +233,6 @@ export default function PeoplePage() {
           onRowClick={handleRowClick}
           showTitle={false}
         />
-
-        <div ref={contactDetailRef}>
-          <Collapse in={selectedPerson !== null} transitionDuration={300}>
-            {selectedPerson && (
-              <Paper p="lg" withBorder style={{ position: 'relative' }}>
-                <ActionIcon
-                  style={{ position: 'absolute', top: 16, right: 16, zIndex: 100 }}
-                  onClick={() => setSelectedPerson(null)}
-                  variant="filled"
-                  color="gray"
-                  size="lg"
-                  radius="xl"
-                  aria-label="Close contact details"
-                >
-                  <IconX size={20} />
-                </ActionIcon>
-                <ContactPage
-                  contactId={selectedPerson.id.toString()}
-                  contactName={selectedPerson.full_name || selectedPerson.discord_id || `Contact #${selectedPerson.id}`}
-                />
-              </Paper>
-            )}
-          </Collapse>
-        </div>
 
         {/* Pagination and count */}
         <Paper p="sm" withBorder>
