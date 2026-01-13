@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Ticket, TicketAuditlog, TicketStatus, TicketType
+from .models import Ticket, TicketStatus, TicketComment
 
 User = get_user_model()
 
@@ -32,30 +32,29 @@ class TicketSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'modified_at', 'status_display', 'type_display', 'assigned_to_username', 'reported_by_username', 'priority_display', 'reported_by']
 
 
-class TicketAuditlogSerializer(serializers.ModelSerializer):
-    log_display = serializers.CharField(
-        source='get_log_type_display',
-        read_only=True
-    )
-    actor_username = serializers.CharField(
-        source='actor.username',
-        read_only=True
+class TicketCommentSerializer(serializers.ModelSerializer):
+    author_display = serializers.CharField(
+        source="author.get_full_name",
+        read_only=True,
     )
 
     class Meta:
-        model = TicketAuditlog
+        model = TicketComment
         fields = [
-            'id',
-            'ticket',
-            'log_type',
-            'log_display',
-            'message',
-            'actor',
-            'actor_username',
-            'data',
-            'created_at',
+            "id",
+            "ticket",
+            "author",
+            "author_display",
+            "message",
+            "created_at",
+            "modified_at",
         ]
-        read_only_fields = ['id', 'created_at', 'log_type', 'log_display', 'actor', 'actor_username']
+        read_only_fields = ["author", "created_at", "modified_at"]
 
-class TicketCommentSerializer(serializers.Serializer):
+
+class TicketTimelineEventSerializer(serializers.Serializer):
+    type = serializers.CharField()
+    created_at = serializers.DateTimeField()
+    actor = serializers.CharField()
+    actor_id = serializers.IntegerField()
     message = serializers.CharField()
