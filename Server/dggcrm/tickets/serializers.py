@@ -52,9 +52,10 @@ class TicketCommentSerializer(serializers.ModelSerializer):
         read_only_fields = ["author", "created_at", "modified_at"]
 
 
-class TicketTimelineEventSerializer(serializers.Serializer):
+class TicketTimelineSerializer(serializers.Serializer):
     type = serializers.CharField()
     created_at = serializers.DateTimeField()
-    actor = serializers.CharField()
-    actor_id = serializers.IntegerField()
-    message = serializers.CharField()
+    actor_display = serializers.CharField(allow_null=True)
+    actor_id = serializers.IntegerField(allow_null=True)
+    message = serializers.CharField(allow_null=True, required=False)
+    changes = serializers.JSONField(allow_null=True, required=False)
