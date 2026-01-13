@@ -9,7 +9,7 @@ from django.db.models import Count, Q, F
 from django.contrib.contenttypes.models import ContentType
 
 from .models import Ticket, TicketStatus, TicketType, TicketComment
-from .serializers import TicketSerializer, TicketCommentSerializer, TicketTimelineEventSerializer
+from .serializers import TicketSerializer, TicketCommentSerializer, TicketTimelineSerializer
 
 # TODO: Handle permissions for views in file
 class TicketViewSet(viewsets.ModelViewSet):
@@ -168,9 +168,15 @@ class TicketViewSet(viewsets.ModelViewSet):
 
         # Sort newest first
         combined_entries.sort(key=lambda e: e["created_at"], reverse=True)
+        serializer = TicketTimelineSerializer(combined_entries, many=True)
 
-        serializer = TicketTimelineEventSerializer(combined_entries, many=True)
-        return Response(combined_entries)
+        page = self.paginate_queryset(combined_entries)
+        if page is not None:
+            # Reserializer page
+            serializer = TicketTimelineSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        return Response(serializer.data)
 
 
     def perform_create(self, serializer):
