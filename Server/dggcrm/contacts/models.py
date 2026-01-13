@@ -1,4 +1,8 @@
 from django.db import models
+from pydantic import BaseModel
+
+class ContactActivityDataJson(BaseModel):   #While the data for the content activity isn't defined
+    content : str
 
 class Contact(models.Model):
     """
@@ -79,5 +83,39 @@ class TagAssignments(models.Model):
 
     def __str__(self):
         return f"{self.tag.name}"
+
+class ContactActivity(models.Model):
+    class ActivityTypes(models.IntegerChoices): # We can flesh these out later
+        ACCOMPLISHMENT = 0                      # Could be a good use of Colors here, but lets save that for V2
+        SUSPICION = 1
+        MISC = 2
+
+
+    id = models.AutoField(primary_key=True)
+
+    contact = models.ForeignKey(
+        Contact,
+        on_delete=models.CASCADE,
+        related_name="activities",
+    )
+
+    activity_type = models.IntegerField(choices=ActivityTypes)
+    data = models.JSONField()
+
+
+    # user = models.ForeignKey(         No user model currently, so cannot be implemented
+    #     User,
+    #     on_delete=models.CASCADE,
+    #     related_name="activities",
+    # )
+
+    activity_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'contact_activities'
+
+    def __str__(self):
+        return f"{self.contact.full_name} - {self.activity_type} - {self.activity_date}"
+
 
 # TODO: implement missing tables from DB diagram

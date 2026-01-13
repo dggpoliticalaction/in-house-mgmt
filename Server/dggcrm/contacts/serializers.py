@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Contact, Tag, TagAssignments
+from .models import Contact, Tag, TagAssignments, ContactActivity
 
 
 class ContactSerializer(serializers.ModelSerializer):
@@ -57,4 +57,26 @@ class TagAssignmentSerializer(serializers.ModelSerializer):
         read_only_fields = [
             "id",
             "created_at",
+        ]
+
+
+class ContactActivitySerializer(serializers.ModelSerializer):
+    activity_type_display = serializers.CharField(
+        source="get_activity_type_display",
+        read_only=True,
+    )
+
+    class Meta:
+        model = ContactActivity
+        fields = [
+            "id",
+            "contact",
+            "activity_type",
+            "activity_type_display",
+            "data",
+            "activity_date",
+        ]
+        read_only_fields = [
+            "id",
+            "activity_date",
         ]

@@ -55,4 +55,17 @@ class Migration(migrations.Migration):
                 'unique_together': {('contact', 'tag')},
             },
         ),
+        migrations.CreateModel(
+            name='ContactActivity',
+            fields=[
+                ('id', models.AutoField(primary_key=True, serialize=False)),
+                ('activity_type', models.IntegerField(choices=[(0, 'Accomplishment'), (1, 'Suspicion'), (2, 'Misc')])),
+                ('data', models.JSONField()),
+                ('activity_date', models.DateTimeField(auto_now_add=True)),
+                ('contact', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='activities', to='contacts.contact')),
+            ],
+            options={
+                'db_table': 'contact_activities',
+            },
+        ),
     ]

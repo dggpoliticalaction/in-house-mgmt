@@ -4,6 +4,7 @@ import psycopg
 from faker import Faker
 import random
 import argparse
+import json
 from datetime import datetime, timedelta
 
 # --- DB Connection ---
@@ -62,6 +63,39 @@ def populate_with_fake_data(conn, num_contacts=50, num_events=15, num_tickets=30
                 "ON CONFLICT DO NOTHING",
                 (cid, tid, datetime.now())
             )
+    conn.commit()
+
+    # Contact activities
+    activity_count = 0
+    for cid in contact_ids:
+        num_activities = random.randint(0, 5)
+        for _ in range(num_activities):
+            activity_type = random.choice([0, 1, 2])  # 0=ACCOMPLISHMENT, 1=SUSPICION, 2=MISC
+
+            # Generate appropriate data based on activity type
+            if activity_type == 0:  # ACCOMPLISHMENT
+                data = {
+                    'content': fake.sentence(nb_words=10),
+                    'achievement': random.choice(['Volunteered for event', 'Recruited new member', 'Led discussion', 'Organized meetup'])
+                }
+            elif activity_type == 1:  # SUSPICION
+                data = {
+                    'content': fake.sentence(nb_words=12),
+                    'concern': random.choice(['Unresponsive', 'Missed multiple events', 'Conflicting information', 'Behavioral concerns'])
+                }
+            else:  # MISC
+                data = {
+                    'content': fake.text(max_nb_chars=150)
+                }
+
+            activity_date = fake.date_time_between(start_date='-6m', end_date='now')
+
+            c.execute(
+                "INSERT INTO contact_activities (contact_id, activity_type, data, activity_date) "
+                "VALUES (%s, %s, %s, %s)",
+                (cid, activity_type, json.dumps(data), activity_date)
+            )
+            activity_count += 1
     conn.commit()
 
     # Events
@@ -172,7 +206,7 @@ def populate_with_fake_data(conn, num_contacts=50, num_events=15, num_tickets=30
             )
     conn.commit()
 
-    print(f"Populated {len(contact_ids)} contacts, {len(tags)} tags, {len(event_ids)} events, {len(ticket_ids)} tickets.")
+    print(f"Populated {len(contact_ids)} contacts, {activity_count} contact activities, {len(tags)} tags, {len(event_ids)} events, {len(ticket_ids)} tickets.")
 
 
 def parse_args():

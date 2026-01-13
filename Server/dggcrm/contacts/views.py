@@ -1,13 +1,15 @@
 from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
+from rest_framework.response import Response
 from django.db.models import Q
 
-from .models import Contact, Tag, TagAssignments
+from .models import Contact, Tag, TagAssignments, ContactActivity
 from .serializers import (
     ContactSerializer,
     TagSerializer,
     TagAssignmentSerializer,
+    ContactActivitySerializer,
 )
 
 # TODO: Add permission_classes to these views
@@ -63,6 +65,18 @@ class ContactViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    @action(detail=True, methods=["get"])
+    def activities(self, request, pk=None):
+        """
+        Get all contact activities for a specific contact.
+
+        Usage: GET /api/contacts/{id}/activities/
+        """
+        contact = self.get_object()
+        activities = contact.activities.all().order_by("-activity_date")
+        serializer = ContactActivitySerializer(activities, many=True)
+        return Response(serializer.data)
+
 
 class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
@@ -78,3 +92,4 @@ class TagAssignmentViewSet(viewsets.ModelViewSet):
         if contact_id:
             queryset = queryset.filter(contact_id=contact_id)
         return queryset
+    
