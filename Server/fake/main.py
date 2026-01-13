@@ -161,14 +161,13 @@ def populate_with_fake_data(conn, num_contacts=50, num_events=15, num_tickets=30
     for tid in ticket_ids:
         num_logs = random.randint(0, 5)
         for _ in range(num_logs):
-            event_type = random.choice(['CREATED','UPDATED','CLAIM','COMMENT'])
-            message = fake.sentence(nb_words=8)
-            actor = random.choice(user_ids + [None])  # None = system
+            message = fake.sentence(nb_words=12)
+            author = random.choice(user_ids + [None])  # None = system
             created_at = fake.date_time_between(start_date='-1y', end_date='now')
             c.execute(
-                "INSERT INTO ticket_audit_logs (ticket_id, log_type, message, actor_id, data, created_at) "
-                "VALUES (%s, %s, %s, %s, %s, %s)",
-                (tid, event_type, message, actor, '{}', created_at)
+                "INSERT INTO ticket_comments (ticket_id, author_id, message, created_at, modified_at) "
+                "VALUES (%s, %s, %s, %s, %s)",
+                (tid, author, message, created_at, created_at)
             )
     conn.commit()
 
