@@ -11,9 +11,10 @@ import {
   Stack,
   Modal,
   Textarea,
-  Text
+  Text,
+  ActionIcon
 } from '@mantine/core';
-import { IconPlus, IconSearch } from '@tabler/icons-react';
+import { IconPlus, IconSearch, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
 import { useForm } from '@mantine/form';
 import EventsTable, { type Event, type Group as EventGroup } from '@/app/components/EventsTable';
@@ -23,14 +24,13 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState<string | null>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [nextUrl, setNextUrl] = useState<string | null>(null);
+  const [previousUrl, setPreviousUrl] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const itemsPerPage = 20;
 
   const form = useForm({
     initialValues: {
@@ -48,30 +48,32 @@ export default function EventsPage() {
     }
   });
 
-  // Fetch events whenever filters or page changes
+  // Fetch events whenever filters change
   useEffect(() => {
     fetchEvents();
-  }, [searchQuery, dateFilter, currentPage]);
+  }, [searchQuery, dateFilter]);
 
-  const fetchEvents = async () => {
+  const fetchEvents = async (url?: string) => {
     try {
       setLoading(true);
 
-      // Build query parameters
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        page_size: itemsPerPage.toString()
-      });
+      let fetchUrl = url;
+      if (!fetchUrl) {
+        // Build query parameters for initial fetch
+        const params = new URLSearchParams();
+        if (searchQuery) params.append('search', searchQuery);
+        if (dateFilter && dateFilter !== 'all') params.append('date_filter', dateFilter);
+        fetchUrl = `/api/events/?${params}`;
+      }
 
-      if (searchQuery) params.append('search', searchQuery);
-      if (dateFilter && dateFilter !== 'all') params.append('date_filter', dateFilter);
-
-      const response = await fetch(`/api/events/?${params}`);
+      const response = await fetch(fetchUrl);
       const data = await response.json();
+      console.log(data);
 
-      setEvents(data.results);
-      setTotalCount(data.count);
-      setTotalPages(data.total_pages);
+      setEvents(data.results || []);
+      setTotalCount(data.count || 0);
+      setNextUrl(data.next);
+      setPreviousUrl(data.previous);
     } catch (error) {
       console.error('Error fetching events:', error);
     } finally {
@@ -81,9 +83,8 @@ export default function EventsPage() {
 
   const handleReset = () => {
     setSearchQuery('');
-    setSelectedGroup('all');
     setDateFilter('all');
-    setCurrentPage(1);
+    fetchEvents();
   };
 
   const handleRowClick = (event: Event) => {
@@ -122,9 +123,18 @@ export default function EventsPage() {
     }
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleNext = () => {
+    if (nextUrl) {
+      fetchEvents(nextUrl);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handlePrevious = () => {
+    if (previousUrl) {
+      fetchEvents(previousUrl);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   // TODO: Proper date filtering
@@ -181,15 +191,30 @@ export default function EventsPage() {
           loading={loading}
           onRowClick={handleRowClick}
           showTitle={false}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
         />
 
-        {/* Total count */}
+        {/* Pagination and count */}
         <Paper p="sm" withBorder>
           <Group justify="space-between">
             <span>{totalCount} {totalCount === 1 ? 'event' : 'events'} found</span>
+            <Group gap="xs">
+              <ActionIcon
+                variant="filled"
+                disabled={!previousUrl}
+                onClick={handlePrevious}
+                aria-label="Previous page"
+              >
+                <IconChevronLeft size={18} />
+              </ActionIcon>
+              <ActionIcon
+                variant="filled"
+                disabled={!nextUrl}
+                onClick={handleNext}
+                aria-label="Next page"
+              >
+                <IconChevronRight size={18} />
+              </ActionIcon>
+            </Group>
           </Group>
         </Paper>
       </Stack>
@@ -264,7 +289,7 @@ export default function EventsPage() {
             <div>
               <Text size="sm" fw={500} c="dimmed">Date</Text>
               <Text size="sm">{selectedEvent.starts_at || 'No start date specified'}</Text>
-              <Text size="sm">{selectedEvent.ends_date || 'No end date specified'}</Text>
+              <Text size="sm">{selectedEvent.ends_at || 'No end date specified'}</Text>
             </div>
             <div>
               <Text size="sm" fw={500} c="dimmed">Location</Text>

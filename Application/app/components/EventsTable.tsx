@@ -1,6 +1,6 @@
 'use client';
 
-import { Table, Badge, Stack, Title, LoadingOverlay, Paper, Text, Pagination, Center } from '@mantine/core';
+import { Table, Badge, Stack, Title, LoadingOverlay, Paper, Text } from '@mantine/core';
 
 export interface Event {
   id:number,
@@ -22,19 +22,13 @@ interface EventsTableProps {
   loading?: boolean;
   onRowClick?: (event: Event) => void;
   showTitle?: boolean;
-  currentPage?: number;
-  totalPages?: number;
-  onPageChange?: (page: number) => void;
 }
 
 export default function EventsTable({
   events,
   loading = false,
   onRowClick,
-  showTitle = true,
-  currentPage = 1,
-  totalPages = 1,
-  onPageChange
+  showTitle = true
 }: EventsTableProps) {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'No date';
@@ -100,15 +94,6 @@ export default function EventsTable({
             )}
           </Table.Tbody>
         </Table>
-        {totalPages > 1 && onPageChange && (
-          <Center mt="md">
-            <Pagination
-              value={currentPage}
-              onChange={onPageChange}
-              total={totalPages}
-            />
-          </Center>
-        )}
       </Stack>
     </Paper>
   );
