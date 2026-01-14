@@ -3,5 +3,6 @@ django
 djangorestframework
 django-cors-headers
 django-environ==0.12.0
+django-auditlog==3.4.1
 psycopg[c]==3.3.2
 argparse

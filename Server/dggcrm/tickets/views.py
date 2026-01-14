@@ -3,31 +3,33 @@ from rest_framework.exceptions import APIException
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
+from auditlog.models import LogEntry
 
 from django.db.models import Count, Q, F
+from django.contrib.contenttypes.models import ContentType
 
-from .models import Ticket, TicketStatus, TicketType, TicketAuditlog, TypeTicketLog
-from .serializers import TicketSerializer, TicketAuditlogSerializer, TicketCommentSerializer
+from .models import Ticket, TicketStatus, TicketType, TicketComment
+from .serializers import TicketSerializer, TicketCommentSerializer, TicketTimelineSerializer
 
 # TODO: Handle permissions for views in file
 class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all().order_by('-created_at')
     serializer_class = TicketSerializer
     filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-    search_fields = ['id'] # TODO: Add more fields
+    search_fields = ['id', 'title']
     ordering_fields = ['priority', 'created_at', 'modified_at', 'ticket_status', 'ticket_type', ]
     ordering = ['priority', '-created_at']
 
     def get_queryset(self):
         queryset = super().get_queryset()
 
-        q = self.request.query_params.get('q', '').strip()
         status = self.request.query_params.get('status')
         ticket_type = self.request.query_params.get('type')
         priority = self.request.query_params.get('priority')
-
-        if q:
-            queryset = queryset.filter(Q(id__icontains=q) | Q(title__icontains=q) | Q(description__icontains=q))
+        assigned_to_id = self.request.query_params.get('assigned_to')
+        reported_by_id = self.request.query_params.get('reported_by')
+        event_id = self.request.query_params.get('event')
+        contact_id = self.request.query_params.get('contact')
 
         if status is not None:
             queryset = queryset.filter(ticket_status=status)
@@ -44,6 +46,15 @@ class TicketViewSet(viewsets.ModelViewSet):
                     code=status.HTTP_400_BAD_REQUEST
                 )
             queryset = queryset.filter(priority=priority)
+
+        if assigned_to_id is not None:
+            queryset = queryset.filter(assigned_to=assigned_to_id)
+        if reported_by_id is not None:
+            queryset = queryset.filter(reported_by=reported_by_id)
+        if event_id is not None:
+            queryset = queryset.filter(event=event_id)
+        if contact_id is not None:
+            queryset = queryset.filter(contact=contact_id)
 
         return queryset
 
@@ -97,6 +108,7 @@ class TicketViewSet(viewsets.ModelViewSet):
 
         return Response(qs)
 
+
     @action(detail=True, methods=['post'], url_path='comment', serializer_class=TicketCommentSerializer)
     def comment(self, request, pk=None):
         """
@@ -106,18 +118,65 @@ class TicketViewSet(viewsets.ModelViewSet):
         ticket = self.get_object()
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        message = serializer.validated_data['message']
 
-        log = TicketAuditlog.objects.create(
+        comment = serializer.save(
             ticket=ticket,
-            message=message,
-            actor=request.user if request.user.is_authenticated else None,
-            log_type=TypeTicketLog.COMMENT,
+            author=request.user if request.user.is_authenticated else None,
         )
 
-        # Return full audit log data
-        return Response(TicketAuditlogSerializer(log, context={'request': request}).data, status=status.HTTP_201_CREATED)
+        return Response(TicketAuditlogSerializer(comment, context={'request': request}).data, status=status.HTTP_201_CREATED)
 
+
+    @action(detail=True, methods=["get"])
+    def timeline(self, request, pk=None):
+        ticket = self.get_object()
+        show_type = self.request.query_params.get("show", "both").lower()
+
+        print("show_type", show_type)
+
+        audit_entries = []
+        comments = []
+
+        if show_type in ["audit", "both"]:
+            audit_entries = LogEntry.objects.filter(
+                content_type=ContentType.objects.get_for_model(Ticket),
+                object_pk=ticket.pk,
+            )
+
+        if show_type in ["comment", "both"]:
+            comments = ticket.comments.all()
+
+        combined_entries = []
+
+        for log in audit_entries:
+            combined_entries.append({
+                "type": "audit",
+                "created_at": log.timestamp,
+                "actor_display": log.actor.username if log.actor else None,
+                "actor_id": log.actor.id if log.actor else None,
+                "changes": log.changes or log.object_repr,
+            })
+
+        for comment in comments:
+            combined_entries.append({
+                "type": "comment",
+                "created_at": comment.created_at,
+                "actor_display": comment.author.username if comment.author else None,
+                "actor_id": comment.author.id if comment.author else None,
+                "message": comment.message,
+            })
+
+        # Sort newest first
+        combined_entries.sort(key=lambda e: e["created_at"], reverse=True)
+        serializer = TicketTimelineSerializer(combined_entries, many=True)
+
+        page = self.paginate_queryset(combined_entries)
+        if page is not None:
+            # Reserializer page
+            serializer = TicketTimelineSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        return Response(serializer.data)
 
 
     def perform_create(self, serializer):
@@ -126,16 +185,3 @@ class TicketViewSet(viewsets.ModelViewSet):
         """
         user = self.request.user
         serializer.save(reported_by=user if user and user.is_authenticated else None)
-
-class TicketAuditlogViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    Read-only view for listing audit logs.
-    """
-    serializer_class = TicketAuditlogSerializer
-
-    def get_queryset(self):
-        ticket_id = self.kwargs.get('ticket_id')
-        queryset = TicketAuditlog.objects.select_related('actor', 'ticket').all().order_by('-created_at')
-        if ticket_id:
-            queryset = queryset.filter(ticket_id=ticket_id)
-        return queryset

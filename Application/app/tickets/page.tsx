@@ -41,6 +41,10 @@ export default function TicketPage() {
     fetchTicketes();
   }, []);
 
+  const handleReset = () => {
+    fetchTicketes();
+  };
+
   const fetchTicketes = async (url?: string) => {
     try {
       setLoading(true);
@@ -152,6 +156,9 @@ export default function TicketPage() {
                     />
                     <Button mt="xl">Update</Button>
                   </Group>
+                <Group gap="sm">
+                  <Button variant="outline" onClick={handleReset}>Reset</Button>
+                </Group>
                 </Stack>
               </Paper>
             )}

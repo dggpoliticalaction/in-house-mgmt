@@ -115,6 +115,7 @@ export default function ContactsPage() {
     setSearchQuery('');
     setSelectedGroup('all');
     setSelectedTag('all');
+    fetchContacts();
   };
 
   const handleRowClick = (contact: Contact) => {

@@ -11,84 +11,69 @@ import {
   Stack,
   Modal,
   Textarea,
-  Text
+  Text,
+  ActionIcon
 } from '@mantine/core';
-import { IconPlus, IconSearch } from '@tabler/icons-react';
+import { IconPlus, IconSearch, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
 import { useForm } from '@mantine/form';
-import EventsTable, { type Event, type Group as EventGroup } from '@/app/components/EventsTable';
+import EventsTable, { type Event } from '@/app/components/EventsTable';
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedGroup, setSelectedGroup] = useState<string | null>('all');
   const [dateFilter, setDateFilter] = useState<string | null>('all');
-  const [groups, setGroups] = useState<EventGroup[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [nextUrl, setNextUrl] = useState<string | null>(null);
+  const [previousUrl, setPreviousUrl] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const itemsPerPage = 20;
 
   const form = useForm({
     initialValues: {
       name: '',
       description: '',
-      date: '',
-      location: '',
-      group: ''
+      starts_at: '',
+      ends_at: '',
+      location_address: '',
+      location_name: '',
     },
     validate: {
       name: (value) => (!value ? 'Event name is required' : null),
-      date: (value) => (!value ? 'Date is required' : null),
-      group: (value) => (!value ? 'Group is required' : null)
+      starts_at: (value) => (!value ? 'Start date is required' : null),
+      ends_at: (value) => (!value ? 'End date is required' : null),
     }
   });
 
-  // Fetch groups on component mount
-  useEffect(() => {
-    fetchGroups();
-  }, []);
-
-  // Fetch events whenever filters or page changes
+  // Fetch events whenever filters change
   useEffect(() => {
     fetchEvents();
-  }, [searchQuery, selectedGroup, dateFilter, currentPage]);
+  }, [searchQuery, dateFilter]);
 
-  const fetchGroups = async () => {
-    try {
-      const response = await fetch('/api/groups/');
-      const data = await response.json();
-      setGroups(data);
-    } catch (error) {
-      console.error('Error fetching groups:', error);
-    }
-  };
-
-  const fetchEvents = async () => {
+  const fetchEvents = async (url?: string) => {
     try {
       setLoading(true);
 
-      // Build query parameters
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        page_size: itemsPerPage.toString()
-      });
+      let fetchUrl = url;
+      if (!fetchUrl) {
+        // Build query parameters for initial fetch
+        const params = new URLSearchParams();
+        if (searchQuery) params.append('search', searchQuery);
+        if (dateFilter && dateFilter !== 'all') params.append('date_filter', dateFilter);
+        fetchUrl = `/api/events/?${params}`;
+      }
 
-      if (searchQuery) params.append('search', searchQuery);
-      if (selectedGroup && selectedGroup !== 'all') params.append('group', selectedGroup);
-      if (dateFilter && dateFilter !== 'all') params.append('date_filter', dateFilter);
-
-      const response = await fetch(`/api/events/with-participants/?${params}`);
+      const response = await fetch(fetchUrl);
       const data = await response.json();
+      console.log(data);
 
-      setEvents(data.results);
-      setTotalCount(data.count);
-      setTotalPages(data.total_pages);
+      setEvents(data.results || []);
+      setTotalCount(data.count || 0);
+      setNextUrl(data.next);
+      setPreviousUrl(data.previous);
     } catch (error) {
       console.error('Error fetching events:', error);
     } finally {
@@ -98,9 +83,8 @@ export default function EventsPage() {
 
   const handleReset = () => {
     setSearchQuery('');
-    setSelectedGroup('all');
     setDateFilter('all');
-    setCurrentPage(1);
+    fetchEvents();
   };
 
   const handleRowClick = (event: Event) => {
@@ -139,22 +123,26 @@ export default function EventsPage() {
     }
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleNext = () => {
+    if (nextUrl) {
+      fetchEvents(nextUrl);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
-  // Prepare dropdown options
-  const groupOptions = [
-    { value: 'all', label: 'Any' },
-    ...groups.map(g => ({ value: g.gid.toString(), label: g.name }))
-  ];
+  const handlePrevious = () => {
+    if (previousUrl) {
+      fetchEvents(previousUrl);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
-  const dateFilterOptions = [
-    { value: 'all', label: 'All Events' },
-    { value: 'upcoming', label: 'Upcoming' },
-    { value: 'past', label: 'Past' }
-  ];
+  // TODO: Proper date filtering
+  // const dateFilterOptions = [
+  //   { value: 'all', label: 'All Events' },
+  //   { value: 'upcoming', label: 'Upcoming' },
+  //   { value: 'past', label: 'Past' }
+  // ];
 
   return (
     <Container size="xl" py="xl">
@@ -182,22 +170,14 @@ export default function EventsPage() {
                 leftSection={<IconSearch size={16} />}
                 style={{ flex: 1 }}
               />
-              <Select
-                label="Group"
-                placeholder="Select group"
-                value={selectedGroup}
-                onChange={setSelectedGroup}
-                data={groupOptions}
-                style={{ minWidth: 200 }}
-              />
-              <Select
+              {/*<Select
                 label="Date"
                 placeholder="Filter by date"
                 value={dateFilter}
                 onChange={setDateFilter}
                 data={dateFilterOptions}
                 style={{ minWidth: 200 }}
-              />
+              />*/}
             </Group>
             <Group gap="sm">
               <Button variant="outline" onClick={handleReset}>Reset</Button>
@@ -211,15 +191,30 @@ export default function EventsPage() {
           loading={loading}
           onRowClick={handleRowClick}
           showTitle={false}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
         />
 
-        {/* Total count */}
+        {/* Pagination and count */}
         <Paper p="sm" withBorder>
           <Group justify="space-between">
             <span>{totalCount} {totalCount === 1 ? 'event' : 'events'} found</span>
+            <Group gap="xs">
+              <ActionIcon
+                variant="filled"
+                disabled={!previousUrl}
+                onClick={handlePrevious}
+                aria-label="Previous page"
+              >
+                <IconChevronLeft size={18} />
+              </ActionIcon>
+              <ActionIcon
+                variant="filled"
+                disabled={!nextUrl}
+                onClick={handleNext}
+                aria-label="Next page"
+              >
+                <IconChevronRight size={18} />
+              </ActionIcon>
+            </Group>
           </Group>
         </Paper>
       </Stack>
@@ -245,22 +240,26 @@ export default function EventsPage() {
               {...form.getInputProps('description')}
             />
             <TextInput
-              label="Date"
+              label="Start Date"
               placeholder="YYYY-MM-DD or ISO date string"
               required
-              {...form.getInputProps('date')}
+              {...form.getInputProps('starts_at')}
             />
             <TextInput
-              label="Location"
-              placeholder="Enter location (optional)"
-              {...form.getInputProps('location')}
-            />
-            <Select
-              label="Group"
-              placeholder="Select organizing group"
+              label="End Date"
+              placeholder="YYYY-MM-DD or ISO date string"
               required
-              data={groups.map(g => ({ value: g.gid.toString(), label: g.name }))}
-              {...form.getInputProps('group')}
+              {...form.getInputProps('ends_at')}
+            />
+            <TextInput
+              label="Location Name"
+              placeholder="Enter location (optional)"
+              {...form.getInputProps('location_name')}
+            />
+            <TextInput
+              label="Location Address"
+              placeholder="Enter location (optional)"
+              {...form.getInputProps('location_address')}
             />
             <Group justify="flex-end" mt="md">
               <Button variant="outline" onClick={() => setAddModalOpen(false)}>
@@ -289,31 +288,14 @@ export default function EventsPage() {
             </div>
             <div>
               <Text size="sm" fw={500} c="dimmed">Date</Text>
-              <Text size="sm">{selectedEvent.date || 'No date specified'}</Text>
+              <Text size="sm">{selectedEvent.starts_at || 'No start date specified'}</Text>
+              <Text size="sm">{selectedEvent.ends_at || 'No end date specified'}</Text>
             </div>
             <div>
               <Text size="sm" fw={500} c="dimmed">Location</Text>
-              <Text size="sm">{selectedEvent.location || 'No location specified'}</Text>
+              <Text size="sm">{selectedEvent.location_display}</Text>
             </div>
-            <div>
-              <Text size="sm" fw={500} c="dimmed">Organizing Group</Text>
-              <Text size="sm">{selectedEvent.group_name}</Text>
-            </div>
-            <div>
-              <Text size="sm" fw={500} c="dimmed">Participants ({selectedEvent.participant_count})</Text>
-              {selectedEvent.participants && selectedEvent.participants.length > 0 ? (
-                <Stack gap="xs" mt="xs">
-                  {selectedEvent.participants.map((participant) => (
-                    <Paper key={participant.did} p="xs" withBorder>
-                      <Text size="sm" fw={500}>{participant.name}</Text>
-                      <Text size="xs" c="dimmed">{participant.email || participant.phone || 'No contact info'}</Text>
-                    </Paper>
-                  ))}
-                </Stack>
-              ) : (
-                <Text size="sm" c="dimmed">No participants yet</Text>
-              )}
-            </div>
+            {/*TODO: Implement participants with issue #24 */}
           </Stack>
         )}
       </Modal>

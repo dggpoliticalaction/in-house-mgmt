@@ -71,6 +71,14 @@ def populate_with_fake_data(conn, num_contacts=50, num_events=15, num_tickets=30
         description = fake.text(max_nb_chars=200)
         event_status = random.choice(['draft', 'scheduled', 'completed', 'canceled'])  # 
 
+        location_name, location_address = None, None
+        # 50/50 chance each gets added
+        if random.choice([True, False]):
+            location_address = fake.address()
+        if random.choice([True, False]):
+            # Second is name of the place
+            location_name = fake.location_on_land()[2]
+
         # Timestamps
         created_at = fake.date_time_between(start_date='-1y', end_date='now')
         modified_at = created_at + timedelta(days=random.randint(0, 10))
@@ -83,7 +91,7 @@ def populate_with_fake_data(conn, num_contacts=50, num_events=15, num_tickets=30
             (name, description, event_status, location_name, location_address, created_at, modified_at, starts_at, ends_at)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
             """,
-            (name, description, event_status, '', '123 Main St', created_at, modified_at, starts_at, ends_at)
+            (name, description, event_status, location_name, location_address, created_at, modified_at, starts_at, ends_at)
         )
         event_ids.append(c.fetchone()[0])
     conn.commit()
@@ -153,14 +161,13 @@ def populate_with_fake_data(conn, num_contacts=50, num_events=15, num_tickets=30
     for tid in ticket_ids:
         num_logs = random.randint(0, 5)
         for _ in range(num_logs):
-            event_type = random.choice(['CREATED','UPDATED','CLAIM','COMMENT'])
-            message = fake.sentence(nb_words=8)
-            actor = random.choice(user_ids + [None])  # None = system
+            message = fake.sentence(nb_words=12)
+            author = random.choice(user_ids + [None])  # None = system
             created_at = fake.date_time_between(start_date='-1y', end_date='now')
             c.execute(
-                "INSERT INTO ticket_audit_logs (ticket_id, log_type, message, actor_id, data, created_at) "
-                "VALUES (%s, %s, %s, %s, %s, %s)",
-                (tid, event_type, message, actor, '{}', created_at)
+                "INSERT INTO ticket_comments (ticket_id, author_id, message, created_at, modified_at) "
+                "VALUES (%s, %s, %s, %s, %s)",
+                (tid, author, message, created_at, created_at)
             )
     conn.commit()
 

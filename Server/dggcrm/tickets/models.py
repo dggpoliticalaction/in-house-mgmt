@@ -1,6 +1,9 @@
 from django.db import models
 from django.conf import settings
 
+from auditlog.models import AuditlogHistoryField
+from auditlog.registry import auditlog
+
 class TicketStatus(models.TextChoices):
     OPEN = "OPEN", "Open"
     TODO = "TODO", "To Do"
@@ -90,61 +93,41 @@ class Ticket(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
 
+    history = AuditlogHistoryField()
+
     class Meta:
         db_table = 'tickets'
 
     def __str__(self):
         return f"{self.id} ({self.get_ticket_status_display()})"
 
+# Using django-auditlog to keep history of tickets 
+auditlog.register(Ticket)
 
-class TypeTicketLog(models.TextChoices):
-    CREATED = "CREATED", "Ticket created"
-    UPDATED = "UPDATED", "Ticket updated"
-    CLAIMED = "CLAIM", "Ticket claimed"
-    UNCLAIMED = "UNCLAIMED", "Ticket unclaimed"
-    STATUS_CHANGED = "STATUS", "Ticket status changed"
-    CONTACT_RESPONSE = "CONTACT_RESPONSE", "Contact responded"
-    COMMENT = "COMMENT", "New comment"
-
-
-class TicketAuditlog(models.Model):
-    id = models.AutoField(primary_key=True)
-
+class TicketComment(models.Model):
     ticket = models.ForeignKey(
         "tickets.Ticket",
         on_delete=models.CASCADE,
-        related_name="ticket_logs",
+        related_name="comments",
     )
 
-    log_type = models.CharField(
-        choices=TypeTicketLog,
-        help_text="Type of event in ticket audit log"
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
     )
 
     message = models.TextField()
 
-    actor = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="ticket_logs_user",
-        help_text="User that created this entry (NULL means system)",
-    )
-
-    data = models.JSONField(
-        blank=True,
-        default=dict,
-        help_text="Optional structured context",
-    )
-
     created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'ticket_audit_logs'
-        ordering = ["-created_at"]
+        db_table = 'ticket_comments'
+        ordering = ["created_at"]
 
     def __str__(self):
-        return f"{self.id}"
+        return f"Comment on {self.ticket_id}"
 
 # TODO: implement missing tables from DB diagram
