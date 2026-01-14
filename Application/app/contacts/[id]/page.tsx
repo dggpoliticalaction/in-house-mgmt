@@ -21,7 +21,7 @@ interface ContactActivity {
     contact: number;
     activity_type: number;
     activity_type_display: string;
-    data: { [key: string]: any };
+    data: { [key: string]: string };
     activity_date: string;
 }
 
@@ -60,7 +60,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
         }
     };
 
-    const mapDataToDetailType = (data: { [key: string]: any }) => {
+    const mapDataToDetailType = (data: { [key: string]: string }) => {
         return (
             <>
                 {data.content && (
