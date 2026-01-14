@@ -4,7 +4,7 @@ import { Grid, Stack, Group, Title, Button, Paper, Box, Badge, Divider, Text, Ti
 import { useRouter } from "next/navigation"
 import { getStatusColor, getPriorityColor } from "./TicketTable"
 import { Ticket } from "./ticket-utils"
-import VolunteerSearch from "./VolunteerSearch"
+import ContactSearch from "./ContactSearch"
 
 export default function TicketView({ticket} : { ticket: Ticket}) {
 
@@ -27,7 +27,7 @@ export default function TicketView({ticket} : { ticket: Ticket}) {
           <Actions />
 
           {/* Volunteer Search and Responses */}
-          <VolunteerSearch reachId={ticket.id} />
+          <ContactSearch reachId={ticket.id} />
         </Stack>
       </Grid.Col>
     </Grid>

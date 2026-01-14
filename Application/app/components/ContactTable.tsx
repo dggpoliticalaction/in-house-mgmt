@@ -3,7 +3,7 @@
 import { Table, Badge, Stack, Title, LoadingOverlay, Paper, Group, Text, Pagination, Center, HoverCard } from '@mantine/core';
 import { useState } from 'react';
 
-export interface Person {
+export interface Contact {
   id: number;
   discord_id: string;
   full_name: string;
@@ -24,10 +24,10 @@ export interface Tag {
   color: string
 }
 
-interface PeopleTableProps {
-  people: Person[];
+interface ContactTableProps {
+  contacts: Contact[];
   loading?: boolean;
-  onRowClick?: (person: Person) => void;
+  onRowClick?: (contact: Contact) => void;
   showTitle?: boolean;
   currentPage?: number;
   totalPages?: number;
@@ -35,43 +35,22 @@ interface PeopleTableProps {
 }
 
 interface AcceptanceStats {
-  person_did: string;
-  person_name: string;
+  contact_did: string;
+  contact_name: string;
   accepted: number;
   rejected: number;
   total: number;
   acceptance_percentage: number;
 }
 
-function TagWithStats({ tag, contact }: { tag: Tag; contact: Contact }) {
+function TagWithStats({ tag }: { tag: Tag }) {
   const [stats, setStats] = useState<AcceptanceStats | null>(null);
   const [loading, setLoading] = useState(false);
-  const [opened, setOpened] = useState(false);
-
-  // const fetchStats = async () => {
-  //   if (stats) return; // Already fetched
-  //   setLoading(true);
-  //   try {
-  //     const response = await fetch(`/api/people/${personDid}/acceptance-stats/`);
-  //     const data = await response.json();
-  //     setStats(data);
-  //   } catch (error) {
-  //     console.error('Error fetching acceptance stats:', error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   return (
     <HoverCard
       width={280}
       shadow="md"
-      opened={opened}
-      onOpen={() => {
-        setOpened(true);
-        // fetchStats();
-      }}
-      onClose={() => setOpened(false)}
     >
       <HoverCard.Target>
         <Badge size="sm" color={tag.color} style={{ cursor: 'pointer' }}>
@@ -104,16 +83,16 @@ function TagWithStats({ tag, contact }: { tag: Tag; contact: Contact }) {
   );
 }
 
-export default function PeopleTable({
-  people,
+export default function ContactTable({
+  contacts,
   loading = false,
   onRowClick,
   showTitle = true,
   currentPage = 1,
   totalPages = 1,
   onPageChange
-}: PeopleTableProps) {
-  const formatContact = (email: string | null, phone: string | null) => {
+}: ContactTableProps) {
+  const formatContactInfo = (email: string | null, phone: string | null) => {
     const parts = [];
     if (email) parts.push(email);
     if (phone) parts.push(phone);
@@ -124,7 +103,7 @@ export default function PeopleTable({
     <Paper p="md" withBorder style={{ position: 'relative', minHeight: '400px' }}>
       <LoadingOverlay visible={loading} />
       <Stack gap="md">
-        {showTitle && <Title order={4}>People ({people.length})</Title>}
+        {showTitle && <Title order={4}>Contacts ({contacts.length})</Title>}
         <Table highlightOnHover>
           <Table.Thead>
             <Table.Tr>
@@ -135,35 +114,35 @@ export default function PeopleTable({
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {people.length === 0 ? (
+            {contacts.length === 0 ? (
               <Table.Tr>
                 <Table.Td colSpan={5} style={{ textAlign: 'center' }}>
-                  <Text c="dimmed" py="xl">No people found.</Text>
+                  <Text c="dimmed" py="xl">No contacts found.</Text>
                 </Table.Td>
               </Table.Tr>
             ) : (
-              people.map((person) => (
+              contacts.map((contact) => (
                 <Table.Tr
-                  key={person.discord_id}
-                  onClick={() => onRowClick?.(person)}
+                  key={contact.discord_id}
+                  onClick={() => onRowClick?.(contact)}
                   style={{ cursor: onRowClick ? 'pointer' : 'default' }}
                 >
-                  <Table.Td>{person.full_name}</Table.Td>
+                  <Table.Td>{contact.full_name}</Table.Td>
                   <Table.Td>
-                    <Text size="sm" c="dimmed">{person.discord_id}</Text>
+                    <Text size="sm" c="dimmed">{contact.discord_id}</Text>
                   </Table.Td>
                   <Table.Td>
-                    <Text size="sm">{formatContact(person.email, person.phone)}</Text>
+                    <Text size="sm">{formatContactInfo(contact.email, contact.phone)}</Text>
                   </Table.Td>
                   <Table.Td>
-                    {person.tags && person.tags.length > 0 ? (
+                    {contact.tags && contact.tags.length > 0 ? (
                       <Group gap="xs">
-                        {person.tags.slice(0, 3).map((tag) => (
-                          <TagWithStats key={tag.id} tag={tag} person={person} />
+                        {contact.tags.slice(0, 3).map((tag) => (
+                          <TagWithStats key={tag.id} tag={tag} />
                         ))}
-                        {person.tags.length > 3 && (
+                        {contact.tags.length > 3 && (
                           <Badge variant="dot" size="sm" c="dimmed">
-                            +{person.tags.length - 3}
+                            +{contact.tags.length - 3}
                           </Badge>
                         )}
                       </Group>
