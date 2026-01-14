@@ -12,7 +12,7 @@ class TicketStatus(models.TextChoices):
     COMPLETED = "COMPLETED", "Completed"
     CANCELED = "CANCELED", "Canceled"
 
-# TODO: Should we convert to table? 
+# TODO: Should we convert to table?  (Yes, we def should)
 class TicketType(models.TextChoices):
     UNKNOWN = "UNKNOWN", "Unknown"
     INTRODUCTION = "INTRODUCTION", "Introduction"
@@ -118,6 +118,11 @@ class TicketComment(models.Model):
         on_delete=models.SET_NULL,
     )
 
+    type = models.CharField(
+        max_length=50,
+        choices=TicketType,
+        default=TicketType.UNKNOWN,
+    )
     message = models.TextField()
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -129,5 +134,35 @@ class TicketComment(models.Model):
 
     def __str__(self):
         return f"Comment on {self.ticket_id}"
+
+class TicketAuditLog(models.Model):
+    ticket = models.ForeignKey(
+        "tickets.Ticket",
+        on_delete=models.CASCADE,
+        related_name="audit_logs",
+    )
+
+    contact = models.ForeignKey(
+        "contacts.Contact",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="ticket_audit_logs",
+    )
+
+   # user_id = models.ForeignKey(
+   #     settings.AUTH_USER_MODEL,
+   #     null=True,
+   #     blank=True,
+   #     on_delete=models.SET_NULL,
+   #  )
+
+    data = models.JSONField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'ticket_audit_logs'
+        ordering = ["-created_at"]
 
 # TODO: implement missing tables from DB diagram

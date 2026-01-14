@@ -4,6 +4,7 @@ import psycopg
 from faker import Faker
 import random
 import argparse
+import json
 from datetime import datetime, timedelta
 
 # --- DB Connection ---
@@ -135,15 +136,43 @@ def populate_with_fake_data(conn, num_contacts=50, num_events=15, num_tickets=30
             )
     conn.commit()
 
-    # Tickets
+    # Tickets - create many tickets per contact with good type coverage
     ticket_ids = []
+    ticket_types = ['UNKNOWN', 'INTRODUCTION', 'RECRUIT', 'CONFIRM']
+
+    # Select ~20% of contacts to be "active" with many tickets across all types
+    num_active_contacts = max(5, len(contact_ids) // 5)
+    active_contacts = random.sample(contact_ids, num_active_contacts)
+
+    # For active contacts, create 3-8 tickets per ticket type
+    for contact in active_contacts:
+        for ticket_type in ticket_types:
+            num_tickets_for_type = random.randint(3, 8)
+            for _ in range(num_tickets_for_type):
+                name = fake.catch_phrase()
+                description = fake.text(max_nb_chars=200)
+                event = random.choice(event_ids + [None])
+                ticket_status = random.choice(['OPEN','TODO','IN_PROGRESS','BLOCKED','COMPLETED','CANCELED'])
+                priority = random.choice([i for i in range(6)])
+                assigned_to = random.choice(user_ids + [None])
+                reported_by = random.choice(user_ids) if len(user_ids) > 0 else None
+                created_at = fake.date_time_between(start_date='-1y', end_date='now')
+                modified_at = created_at + timedelta(days=random.randint(0,5))
+                c.execute(
+                    "INSERT INTO tickets (title, description, ticket_status, ticket_type, event_id, contact_id, assigned_to_id, reported_by_id, priority, created_at, modified_at) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
+                    (name, description, ticket_status, ticket_type, event, contact, assigned_to, reported_by, priority, created_at, modified_at)
+                )
+                ticket_ids.append((c.fetchone()[0], contact))
+
+    # Also create some random tickets (original behavior) for other contacts
     for _ in range(num_tickets):
         name = fake.catch_phrase()
         description = fake.text(max_nb_chars=200)
         event = random.choice(event_ids + [None])
         contact = random.choice(contact_ids + [None])
         ticket_status = random.choice(['OPEN','TODO','IN_PROGRESS','BLOCKED','COMPLETED','CANCELED'])
-        ticket_type = random.choice(['UNKNOWN', 'INTRODUCTION', 'RECURIT', 'CONFIRM'])
+        ticket_type = random.choice(ticket_types)
         priority = random.choice([i for i in range(6)])
         assigned_to = random.choice(user_ids + [None])
         reported_by = random.choice(user_ids) if len(user_ids) > 0 else None
@@ -154,24 +183,56 @@ def populate_with_fake_data(conn, num_contacts=50, num_events=15, num_tickets=30
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
             (name, description, ticket_status, ticket_type, event, contact, assigned_to, reported_by, priority, created_at, modified_at)
         )
-        ticket_ids.append(c.fetchone()[0])
+        ticket_ids.append((c.fetchone()[0], contact))
     conn.commit()
 
-    # Ticket audit logs / comments
-    for tid in ticket_ids:
+    # Ticket comments
+    for tid, _ in ticket_ids:
         num_logs = random.randint(0, 5)
         for _ in range(num_logs):
             message = fake.sentence(nb_words=12)
             author = random.choice(user_ids + [None])  # None = system
+            comment_type = random.choice(['UNKNOWN', 'INTRODUCTION', 'RECRUIT', 'CONFIRM'])
             created_at = fake.date_time_between(start_date='-1y', end_date='now')
             c.execute(
-                "INSERT INTO ticket_comments (ticket_id, author_id, message, created_at, modified_at) "
-                "VALUES (%s, %s, %s, %s, %s)",
-                (tid, author, message, created_at, created_at)
+                "INSERT INTO ticket_comments (ticket_id, author_id, type, message, created_at, modified_at) "
+                "VALUES (%s, %s, %s, %s, %s, %s)",
+                (tid, author, comment_type, message, created_at, created_at)
             )
     conn.commit()
 
-    print(f"Populated {len(contact_ids)} contacts, {len(tags)} tags, {len(event_ids)} events, {len(ticket_ids)} tickets.")
+    # Ticket audit logs (with acceptance data for acceptance_rate calculation)
+    # Every ticket with a contact gets 1-4 audit logs to ensure good test coverage
+    audit_log_count = 0
+    for tid, contact in ticket_ids:
+        if contact is None:
+            # Skip tickets without contacts, or give them 0-1 audit logs
+            num_audit_logs = random.randint(0, 1)
+        else:
+            # Tickets with contacts always get 1-4 audit logs
+            num_audit_logs = random.randint(1, 4)
+
+        for _ in range(num_audit_logs):
+            # acceptance: 1 = accepted, 0 = not accepted
+            # Weight towards acceptance to make data more realistic
+            acceptance = random.choices([0, 1], weights=[30, 70])[0]
+            data = {"acceptance": acceptance}
+
+            # Optionally add other audit data
+            if random.choice([True, False]):
+                data["notes"] = fake.sentence(nb_words=6)
+
+            created_at = fake.date_time_between(start_date='-1y', end_date='now')
+            c.execute(
+                "INSERT INTO ticket_audit_logs (ticket_id, contact_id, data, created_at) "
+                "VALUES (%s, %s, %s, %s)",
+                (tid, contact, json.dumps(data), created_at)
+            )
+            audit_log_count += 1
+    conn.commit()
+
+    print(f"Populated {len(contact_ids)} contacts, {len(tags)} tags, {len(event_ids)} events, {len(ticket_ids)} tickets, {audit_log_count} audit logs.")
+    print(f"  - {num_active_contacts} active contacts with many tickets per type for testing acceptance_rate")
 
 
 def parse_args():
