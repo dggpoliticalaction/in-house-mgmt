@@ -72,8 +72,9 @@ class ContactViewSet(viewsets.ModelViewSet):
         broken down by ticket type.
 
         Returns a JSON with acceptance rates for each ticket type:
-        - -1 if the contact was never offered that ticket type
-        - percentage (0-100) of accepted roles for that type otherwise
+        - rate: -1 if the contact was never offered that ticket type,
+                otherwise percentage (0-100) of accepted offers
+        - total: total number of offers (audit logs with acceptance data)
 
         The acceptance field in TicketAuditLog.data:
         - 1 = accepted
@@ -102,10 +103,16 @@ class ContactViewSet(viewsets.ModelViewSet):
 
             # Calculate rate for this ticket type
             if total_offers == 0:
-                response_data[ticket_type_value] = -1
+                response_data[ticket_type_value] = {
+                    "rate": -1,
+                    "total": 0
+                }
             else:
                 acceptance_percentage = (accepted_offers / total_offers) * 100
-                response_data[ticket_type_value] = round(acceptance_percentage, 2)
+                response_data[ticket_type_value] = {
+                    "rate": round(acceptance_percentage, 2),
+                    "total": total_offers
+                }
 
         return Response(response_data)
 
