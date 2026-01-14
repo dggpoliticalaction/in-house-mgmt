@@ -9,7 +9,7 @@ export interface AddOrgFormValues {
 }
 
 export interface AddMemberFormValues {
-  person: string;
+  contact: string;
   access_level: string;
 }
 
@@ -18,7 +18,7 @@ export interface AccessLevelFormValues {
 }
 
 export interface AssignRoleFormValues {
-  person: string;
+  contact: string;
   access_level: string;
 }
 
@@ -158,7 +158,7 @@ export function useAdminHandlers(props: UseHandlersProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          person: values.person,
+          contact: values.contact,
           group: selectedOrg.gid,
           access_level: parseInt(values.access_level)
         })
@@ -248,7 +248,7 @@ export function useAdminHandlers(props: UseHandlersProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          person: selectedContact.discord_id,
+          contact: selectedContact.discord_id,
           access_level: parseInt(values.access_level)
         })
       });

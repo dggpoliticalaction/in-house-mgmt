@@ -34,7 +34,7 @@ interface Contact {
 
 interface GeneralRole {
   id: number;
-  person: string;
+  contact: string;
   access_level: number;
 }
 
@@ -87,9 +87,9 @@ export default function ManagementConsole() {
   });
 
   const addMemberForm = useForm({
-    initialValues: { person: '', access_level: '1' },
+    initialValues: { contact: '', access_level: '1' },
     validate: {
-      person: (value) => (!value ? 'Contact is required' : null),
+      contact: (value) => (!value ? 'Contact is required' : null),
       access_level: (value) => (!value ? 'Access level is required' : null)
     }
   });
@@ -100,9 +100,9 @@ export default function ManagementConsole() {
   });
 
   const assignRoleForm = useForm({
-    initialValues: { person: '', access_level: '1' },
+    initialValues: { contact: '', access_level: '1' },
     validate: {
-      person: (value) => (!value ? 'Contact is required' : null),
+      contact: (value) => (!value ? 'Contact is required' : null),
       access_level: (value) => (!value ? 'Access level is required' : null)
     }
   });
@@ -197,7 +197,7 @@ export default function ManagementConsole() {
       const rolesArray = rolesData.results || [];
 
       const contactsWithRoles = contactsArray.map((contact: Contact) => {
-        const role = rolesArray.find((r: GeneralRole) => r.person === contact.discord_id);
+        const role = rolesArray.find((r: GeneralRole) => r.contact === contact.discord_id);
         return {
           id: contact.id,
           discord_id: contact.discord_id,
@@ -536,7 +536,7 @@ export default function ManagementConsole() {
               }}
               searchValue={contactSearchTerm}
               nothingFoundMessage={contactLoading ? "Loading..." : "No contacts found"}
-              {...addMemberForm.getInputProps('person')}
+              {...addMemberForm.getInputProps('contact')}
             />
             {hasMoreContacts && !contactLoading && (
               <Text size="xs" c="dimmed">
