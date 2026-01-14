@@ -16,17 +16,12 @@ import { useState, useEffect, use } from 'react';
 import { IconCheck, IconAlertTriangle, IconInfoCircle, IconArrowLeft } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 
-
 interface ContactActivity {
     id: number;
     contact: number;
     activity_type: number;
     activity_type_display: string;
-    data: {   //Data for now
-        content: string;
-        achievement?: string;
-        concern?: string;
-    };
+    data: { [key: string]: any };
     activity_date: string;
 }
 
@@ -65,6 +60,26 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
         }
     };
 
+    const mapDataToDetailType = (data: { [key: string]: any }) => {
+        return (
+            <>
+                {data.content && (
+                    <Text size="sm" mt={4}>Details: {data.content}</Text>
+                )}
+                {Object.entries(data).map(([key, value]) => {
+                    if (key !== 'content' && value) {
+                        return (
+                            <Text size="sm" mt={4} key={key}>
+                                {key.charAt(0).toUpperCase() + key.slice(1)}: {value}
+                            </Text>
+                        );
+                    }
+                    return null;
+                })}
+            </>
+        );
+    }
+
     const getActivityIcon = (activityType: number) => {
         switch (activityType) {
             case 0: // ACCOMPLISHMENT
@@ -76,13 +91,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
         }
     };
 
-    const getActivityColor = (activityType: number) => {
-        switch (activityType) {
-            case 0: return 'green';
-            case 1: return 'red';
-            default: return 'blue';
-        }
-    };
+
 
     return (
         <Stack gap="md" p="xl">
@@ -111,10 +120,9 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                     <Timeline.Item
                                         key={activity.id}
                                         bullet={getActivityIcon(activity.activity_type)}
-                                        color={getActivityColor(activity.activity_type)}
                                         title={
                                             <Group gap="xs">
-                                                <Badge color={getActivityColor(activity.activity_type)} size="sm">
+                                                <Badge size="sm">
                                                     {activity.activity_type_display}
                                                 </Badge>
                                                 <Text size="xs" c="dimmed">
@@ -123,17 +131,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                             </Group>
                                         }
                                     >
-                                        <Text size="sm" mt={4}>{activity.data.content}</Text>
-                                        {activity.data.achievement && (
-                                            <Text size="sm" c="green" mt={4}>
-                                                Achievement: {activity.data.achievement}
-                                            </Text>
-                                        )}
-                                        {activity.data.concern && (
-                                            <Text size="sm" c="red" mt={4}>
-                                                Concern: {activity.data.concern}
-                                            </Text>
-                                        )}
+                                        {mapDataToDetailType(activity.data)}
                                     </Timeline.Item>
                                 ))}
                             </Timeline>
