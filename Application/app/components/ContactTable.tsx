@@ -43,61 +43,62 @@ interface AcceptanceStats {
   acceptance_percentage: number;
 }
 
-function TagWithStats({ tag, contactDiscordId }: { tag: Tag; contactDiscordId: string }) {
-  const [stats, setStats] = useState<AcceptanceStats | null>(null);
-  const [loading, setLoading] = useState(false);
+// TODO: Implement acceptance stats fetch when backend endpoint is available
+// function TagWithStats({ tag, contactDiscordId }: { tag: Tag; contactDiscordId: string }) {
+//   const [stats, setStats] = useState<AcceptanceStats | null>(null);
+//   const [loading, setLoading] = useState(false);
+//
+//   const fetchStats = async () => {
+//     if (stats || loading) return;
+//     setLoading(true);
+//     try {
+//       const response = await fetch(`/api/contacts/${contactDiscordId}/acceptance-stats/`);
+//       const data = await response.json();
+//       setStats(data);
+//     } catch (error) {
+//       console.error('Error fetching acceptance stats:', error);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+//
+//   return (
+//     <HoverCard width={280} shadow="md">
+//       <HoverCard.Target>
+//         <Badge size="sm" color={tag.color} style={{ cursor: 'pointer' }} onMouseEnter={fetchStats}>
+//           {tag.name}
+//         </Badge>
+//       </HoverCard.Target>
+//       <HoverCard.Dropdown>
+//         <Stack gap="xs">
+//           <Text size="sm" fw={500}>{tag.name} - Acceptance Stats</Text>
+//           {loading ? (
+//             <Text size="xs" c="dimmed">Loading...</Text>
+//           ) : stats ? (
+//             <>
+//               <Text size="xs" c="dimmed">Accepted: {stats.accepted} ({stats.acceptance_percentage}%)</Text>
+//               <Text size="xs" c="dimmed">Rejected: {stats.rejected}</Text>
+//               <Text size="xs" c="dimmed">Total: {stats.total}</Text>
+//             </>
+//           ) : (
+//             <Text size="xs" c="dimmed">No data available</Text>
+//           )}
+//         </Stack>
+//       </HoverCard.Dropdown>
+//     </HoverCard>
+//   );
+// }
 
-  const fetchStats = async () => {
-    if (stats || loading) return; // Already fetched or fetching
-    setLoading(true);
-    try {
-      // TODO: Update endpoint when contact acceptance stats API is available
-      const response = await fetch(`/api/contacts/${contactDiscordId}/acceptance-stats/`);
-      const data = await response.json();
-      setStats(data);
-    } catch (error) {
-      console.error('Error fetching acceptance stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+function TagWithStats({ tag }: { tag: Tag }) {
   return (
-    <HoverCard
-      width={280}
-      shadow="md"
-    >
+    <HoverCard width={200} shadow="md">
       <HoverCard.Target>
-        <Badge
-          size="sm"
-          color={tag.color}
-          style={{ cursor: 'pointer' }}
-          onMouseEnter={fetchStats}
-        >
+        <Badge size="sm" color={tag.color} style={{ cursor: 'pointer' }}>
           {tag.name}
         </Badge>
       </HoverCard.Target>
       <HoverCard.Dropdown>
-        <Stack gap="xs">
-          <Text size="sm" fw={500}>{tag.name} - Acceptance Stats</Text>
-          {loading ? (
-            <Text size="xs" c="dimmed">Loading...</Text>
-          ) : stats ? (
-            <>
-              <Text size="xs" c="dimmed">
-                Accepted: {stats.accepted} ({stats.acceptance_percentage}%)
-              </Text>
-              <Text size="xs" c="dimmed">
-                Rejected: {stats.rejected}
-              </Text>
-              <Text size="xs" c="dimmed">
-                Total: {stats.total}
-              </Text>
-            </>
-          ) : (
-            <Text size="xs" c="dimmed">No data available</Text>
-          )}
-        </Stack>
+        <Text size="xs" c="dimmed">Acceptance stats not implemented yet</Text>
       </HoverCard.Dropdown>
     </HoverCard>
   );
@@ -158,7 +159,7 @@ export default function ContactTable({
                     {contact.tags && contact.tags.length > 0 ? (
                       <Group gap="xs">
                         {contact.tags.slice(0, 3).map((tag) => (
-                          <TagWithStats key={tag.id} tag={tag} contactDiscordId={contact.discord_id} />
+                          <TagWithStats key={tag.id} tag={tag} />
                         ))}
                         {contact.tags.length > 3 && (
                           <Badge variant="dot" size="sm" c="dimmed">
