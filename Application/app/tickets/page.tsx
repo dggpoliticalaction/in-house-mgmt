@@ -48,7 +48,7 @@ export default function TicketPage() {
   const fetchTicketes = async (url?: string) => {
     try {
       setLoading(true);
-      const fetchUrl = url || '/api/tickets/';
+      const fetchUrl = url || '/api/tickets';
       const response = await fetch(fetchUrl);
       console.log('Fetch response:', response);
       const data = await response.json();
