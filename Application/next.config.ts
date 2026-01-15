@@ -30,8 +30,8 @@ module.exports = {
         destination: `${BACKEND_URL}/admin/:path*/`,
       },
       {
-        source: '/static/admin/:path*',
-        destination: `${BACKEND_URL}/static/admin/:path*/`,
+        source: '/django/:path*',
+        destination: `${BACKEND_URL}/django/:path*/`,
       },
     ]
   },

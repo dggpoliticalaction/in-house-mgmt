@@ -124,7 +124,7 @@ class TicketViewSet(viewsets.ModelViewSet):
             author=request.user if request.user.is_authenticated else None,
         )
 
-        return Response(TicketAuditlogSerializer(comment, context={'request': request}).data, status=status.HTTP_201_CREATED)
+        return Response(TicketCommentSerializer(comment, context={'request': request}).data, status=status.HTTP_201_CREATED)
 
 
     @action(detail=True, methods=["get"])
