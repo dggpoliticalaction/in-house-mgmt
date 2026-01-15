@@ -20,32 +20,33 @@ import { useState, useEffect } from 'react';
 import { useForm } from '@mantine/form';
 import OrganizationsTable, { type Organization } from '@/app/components/OrganizationsTable';
 import OrganizationMembersTable, { type GroupMember } from '@/app/components/OrganizationMembersTable';
-import RolesTable, { type PersonWithRole } from '@/app/components/RolesTable';
+import RolesTable, { type ContactWithRole } from '@/app/components/RolesTable';
 import PlaceholderSection from '@/app/components/PlaceholderSection';
 import { useAdminHandlers } from './handlers';
 
-interface Person {
-  did: string;
-  name: string;
+interface Contact {
+  id: number;
+  discord_id: string;
+  full_name: string;
   email: string | null;
   phone: string | null;
 }
 
 interface GeneralRole {
   id: number;
-  person: string;
+  contact: string;
   access_level: number;
 }
 
 export default function ManagementConsole() {
   // Data states
   const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [people, setPeople] = useState<PersonWithRole[]>([]);
-  const [allPeople, setAllPeople] = useState<Person[]>([]);
+  const [contacts, setContacts] = useState<ContactWithRole[]>([]);
+  const [allContacts, setAllContacts] = useState<Contact[]>([]);
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
   const [selectedOrgMembers, setSelectedOrgMembers] = useState<GroupMember[]>([]);
   const [selectedMember, setSelectedMember] = useState<GroupMember | null>(null);
-  const [selectedPerson, setSelectedPerson] = useState<PersonWithRole | null>(null);
+  const [selectedContact, setSelectedContact] = useState<ContactWithRole | null>(null);
 
   // Modal states
   const [orgDetailsOpen, setOrgDetailsOpen] = useState(false);
@@ -73,11 +74,11 @@ export default function ManagementConsole() {
   const [roleTotalPages, setRoleTotalPages] = useState(1);
   const itemsPerPage = 20;
 
-  // People dropdown states
-  const [peopleSearchTerm, setPeopleSearchTerm] = useState('');
-  const [peopleLoading, setPeopleLoading] = useState(false);
-  const [peoplePage, setPeoplePage] = useState(1);
-  const [hasMorePeople, setHasMorePeople] = useState(true);
+  // Contact dropdown states
+  const [contactSearchTerm, setContactSearchTerm] = useState('');
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactPage, setContactPage] = useState(1);
+  const [hasMoreContacts, setHasMoreContacts] = useState(true);
 
   // Forms
   const addOrgForm = useForm({
@@ -86,9 +87,9 @@ export default function ManagementConsole() {
   });
 
   const addMemberForm = useForm({
-    initialValues: { person: '', access_level: '1' },
+    initialValues: { contact: '', access_level: '1' },
     validate: {
-      person: (value) => (!value ? 'Person is required' : null),
+      contact: (value) => (!value ? 'Contact is required' : null),
       access_level: (value) => (!value ? 'Access level is required' : null)
     }
   });
@@ -99,9 +100,9 @@ export default function ManagementConsole() {
   });
 
   const assignRoleForm = useForm({
-    initialValues: { person: '', access_level: '1' },
+    initialValues: { contact: '', access_level: '1' },
     validate: {
-      person: (value) => (!value ? 'Person is required' : null),
+      contact: (value) => (!value ? 'Contact is required' : null),
       access_level: (value) => (!value ? 'Access level is required' : null)
     }
   });
@@ -117,13 +118,13 @@ export default function ManagementConsole() {
   }, [orgCurrentPage]);
 
   useEffect(() => {
-    fetchPeopleWithRoles();
+    fetchContactsWithRoles();
   }, [roleCurrentPage]);
 
-  // Fetch people when search term or page changes
+  // Fetch contacts when search term or page changes
   useEffect(() => {
-    fetchAllPeople(peopleSearchTerm, peoplePage);
-  }, [peopleSearchTerm, peoplePage]);
+    fetchAllContacts(contactSearchTerm, contactPage);
+  }, [contactSearchTerm, contactPage]);
 
   // Fetch organization members when details modal opens
   useEffect(() => {
@@ -176,7 +177,7 @@ export default function ManagementConsole() {
     }
   };
 
-  const fetchPeopleWithRoles = async () => {
+  const fetchContactsWithRoles = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -184,46 +185,47 @@ export default function ManagementConsole() {
         page_size: itemsPerPage.toString()
       });
 
-      const [peopleRes, rolesRes] = await Promise.all([
-        fetch(`/api/people/?${params}`),
-        fetch('/api/general-roles/?page_size=1000') // Fetch all roles to match with current page of people
+      const [contactsRes, rolesRes] = await Promise.all([
+        fetch(`/api/contacts/?${params}`),
+        fetch('/api/general-roles/?page_size=1000') // Fetch all roles to match with current page of contacts
       ]);
 
-      const peopleData = await peopleRes.json();
+      const contactsData = await contactsRes.json();
       const rolesData = await rolesRes.json();
 
-      const peopleArray = peopleData.results || [];
+      const contactsArray = contactsData.results || [];
       const rolesArray = rolesData.results || [];
 
-      const peopleWithRoles = peopleArray.map((person: Person) => {
-        const role = rolesArray.find((r: GeneralRole) => r.person === person.did);
+      const contactsWithRoles = contactsArray.map((contact: Contact) => {
+        const role = rolesArray.find((r: GeneralRole) => r.contact === contact.discord_id);
         return {
-          did: person.did,
-          name: person.name,
+          id: contact.id,
+          discord_id: contact.discord_id,
+          full_name: contact.full_name,
           access_level: role?.access_level ?? null,
           role_id: role?.id
         };
       });
 
-      setPeople(peopleWithRoles);
-      setRoleTotalPages(peopleData.total_pages || 1);
+      setContacts(contactsWithRoles);
+      setRoleTotalPages(contactsData.total_pages || 1);
     } catch (error) {
-      console.error('Error fetching people with roles:', error);
+      console.error('Error fetching contacts with roles:', error);
       alert('Failed to fetch roles');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchAllPeople = async (searchTerm: string = '', page: number = 1) => {
-    setPeopleLoading(true);
+  const fetchAllContacts = async (searchTerm: string = '', page: number = 1) => {
+    setContactLoading(true);
     try {
       const params = new URLSearchParams({
-        search: searchTerm,
+        q: searchTerm,
         page: page.toString()
       });
 
-      const response = await fetch(`/api/people/?${params}`);
+      const response = await fetch(`/api/contacts/?${params}`);
       const data = await response.json();
 
       const results = data.results || [];
@@ -231,18 +233,18 @@ export default function ManagementConsole() {
       {/* If it's the first page or a new search, replace the list
       // Otherwise, append to existing list for "load more" functionality */}
       if (page === 1) {
-        setAllPeople(results);
+        setAllContacts(results);
       } else {
-        setAllPeople(prev => [...prev, ...results]);
+        setAllContacts(prev => [...prev, ...results]);
       }
 
       // Check if there are more pages available
-      setHasMorePeople(!!data.next);
+      setHasMoreContacts(!!data.next);
     } catch (error) {
-      console.error('Error fetching people:', error);
-      setAllPeople([]);
+      console.error('Error fetching contacts:', error);
+      setAllContacts([]);
     } finally {
-      setPeopleLoading(false);
+      setContactLoading(false);
     }
   };
 
@@ -256,7 +258,7 @@ export default function ManagementConsole() {
     setAddMemberOpen,
     setEditMemberOpen,
     setSelectedMember,
-    setSelectedPerson,
+    setSelectedContact,
     setAssignRoleOpen,
     setEditRoleOpen,
     setSubmitting,
@@ -267,10 +269,10 @@ export default function ManagementConsole() {
     editRoleForm,
     fetchOrganizations,
     fetchOrgMembers,
-    fetchPeopleWithRoles,
+    fetchContactsWithRoles,
     selectedOrg,
     selectedMember,
-    selectedPerson,
+    selectedContact,
   });
 
   const {
@@ -305,9 +307,9 @@ export default function ManagementConsole() {
 
   // ===== Dropdown Options =====
 
-  const personOptions = allPeople.map((p) => ({
-    value: p.did,
-    label: `${p.name} (${p.did})`
+  const contactOptions = allContacts.map((c) => ({
+    value: c.discord_id,
+    label: `${c.full_name} (${c.discord_id})`
   }));
 
   const accessLevelOptions = [
@@ -371,7 +373,7 @@ export default function ManagementConsole() {
                   Add Organization
                 </Button>
               </Group>
-                   
+
             </Group>
 
 
@@ -410,7 +412,7 @@ export default function ManagementConsole() {
 
             <Collapse in={roleSectionOpen}>
               <RolesTable
-                people={people}
+                contacts={contacts}
                 loading={loading}
                 onAssignRole={handleAssignRole}
                 onEditRole={handleEditRole}
@@ -514,8 +516,8 @@ export default function ManagementConsole() {
         opened={addMemberOpen}
         onClose={() => {
           setAddMemberOpen(false);
-          setPeopleSearchTerm(''); // Reset search on close
-          setPeoplePage(1);
+          setContactSearchTerm(''); // Reset search on close
+          setContactPage(1);
         }}
         title="Add Member to Organization"
         size="md"
@@ -523,25 +525,25 @@ export default function ManagementConsole() {
         <form onSubmit={addMemberForm.onSubmit(handleSubmitAddMember)}>
           <Stack gap="md">
             <Select
-              label="Person"
-              placeholder="Search for a person"
+              label="Contact"
+              placeholder="Search for a contact"
               required
-              data={personOptions}
+              data={contactOptions}
               searchable
               onSearchChange={(search) => {
-                setPeopleSearchTerm(search);
-                setPeoplePage(1);
+                setContactSearchTerm(search);
+                setContactPage(1);
               }}
-              searchValue={peopleSearchTerm}
-              nothingFoundMessage={peopleLoading ? "Loading..." : "No people found"}
-              {...addMemberForm.getInputProps('person')}
+              searchValue={contactSearchTerm}
+              nothingFoundMessage={contactLoading ? "Loading..." : "No contacts found"}
+              {...addMemberForm.getInputProps('contact')}
             />
-            {hasMorePeople && !peopleLoading && (
+            {hasMoreContacts && !contactLoading && (
               <Text size="xs" c="dimmed">
-                Showing first page of results. Type to search for more people.
+                Showing first page of results. Type to search for more contacts.
               </Text>
             )}
-            {hasMorePeople && peopleLoading && (
+            {hasMoreContacts && contactLoading && (
               <Text size="xs" c="dimmed">
                 Loading more results...
               </Text>
@@ -633,7 +635,7 @@ export default function ManagementConsole() {
         <form onSubmit={assignRoleForm.onSubmit(handleSubmitAssignRole)}>
           <Stack gap="md">
             <Text size="sm">
-              Assigning role to <strong>{selectedPerson?.name}</strong>
+              Assigning role to <strong>{selectedContact?.full_name}</strong>
             </Text>
             <Select
               label="Access Level"
@@ -664,7 +666,7 @@ export default function ManagementConsole() {
         <form onSubmit={editRoleForm.onSubmit(handleSubmitEditRole)}>
           <Stack gap="md">
             <Text size="sm">
-              Editing role for <strong>{selectedPerson?.name}</strong>
+              Editing role for <strong>{selectedContact?.full_name}</strong>
             </Text>
             <Select
               label="Access Level"

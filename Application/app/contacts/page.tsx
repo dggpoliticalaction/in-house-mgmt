@@ -16,11 +16,11 @@ import {
 import { IconPlus, IconFileUpload, IconSearch, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
 import { useForm } from '@mantine/form';
-import PeopleTable, { type Person, type Group as PersonGroup, type Tag } from '@/app/components/PeopleTable';
+import ContactTable, { type Contact, type Group as ContactGroup, type Tag } from '@/app/components/ContactTable';
 import './page.css';
 
-export default function PeoplePage() {
-  const [people, setPeople] = useState<Person[]>([]);
+export default function ContactsPage() {
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGroup, setSelectedGroup] = useState<string | null>('all');
@@ -55,9 +55,9 @@ export default function PeoplePage() {
     fetchGroupsAndTags();
   }, []);
 
-  // Fetch people whenever filters change (reset to first page)
+  // Fetch contacts whenever filters change (reset to first page)
   useEffect(() => {
-    fetchPeople();
+    fetchContacts();
   }, [searchQuery, selectedGroup, selectedTag]);
 
   const fetchGroupsAndTags = async () => {
@@ -80,7 +80,7 @@ export default function PeoplePage() {
     }
   };
 
-  const fetchPeople = async (url?: string) => {
+  const fetchContacts = async (url?: string) => {
     try {
       setLoading(true);
 
@@ -99,13 +99,13 @@ export default function PeoplePage() {
       const response = await fetch(fetchUrl);
       const data = await response.json();
 
-      console.log('Fetched people data:', data);
-      setPeople(data.results);
+      console.log('Fetched contacts data:', data);
+      setContacts(data.results);
       setTotalCount(data.count);
       setNextUrl(data.next);
       setPreviousUrl(data.previous);
     } catch (error) {
-      console.error('Error fetching people:', error);
+      console.error('Error fetching contacts:', error);
     } finally {
       setLoading(false);
     }
@@ -115,50 +115,69 @@ export default function PeoplePage() {
     setSearchQuery('');
     setSelectedGroup('all');
     setSelectedTag('all');
-    fetchPeople();
+    fetchContacts();
   };
 
-  const handleRowClick = (person: Person) => {
-    // TODO: Navigate to person detail page or show modal
-    console.log('Clicked person:', person);
+  const handleRowClick = (contact: Contact) => {
+    // TODO: Navigate to contact detail page or show modal
+    console.log('Clicked contact:', contact);
   };
 
-  const handleAddPerson = () => {
+  const handleAddContact = () => {
     form.reset();
     setSelectedTags([]);
     setAddModalOpen(true);
   };
 
-  const handleSubmitPerson = async (values: typeof form.values) => {
+  const handleSubmitContact = async (values: typeof form.values) => {
     setSubmitting(true);
     try {
-      // Include selectedTags in the submission
-      const personData = {
-        ...values,
-        tags: selectedTags
+      // Step 1: Create the contact
+      const contactData = {
+        discord_id: values.discord_id,
+        full_name: values.full_name,
+        email: values.email,
+        phone: values.phone
       };
 
-      // TODO: Fix this API call
-      const response = await fetch('/api/people/person-and-tags/', {
+      const contactResponse = await fetch('/api/contacts/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(personData),
+        body: JSON.stringify(contactData),
       });
 
+      if (!contactResponse.ok) {
+        throw new Error('Failed to create contact');
+      }
 
-      if (!response.ok) {
-        throw new Error('Failed to create person');
+      const newContact = await contactResponse.json();
+
+      // Step 2: Assign tags to the contact
+      if (selectedTags.length > 0) {
+        const tagAssignmentPromises = selectedTags.map(tagName =>
+          fetch('/api/tag-assignments/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              contact_id: newContact.id,
+              tag_name: tagName
+            }),
+          })
+        );
+        await Promise.all(tagAssignmentPromises);
       }
 
       setAddModalOpen(false);
       form.reset();
       setSelectedTags([]);
-      fetchPeople();
+      fetchContacts();
     } catch (error) {
-      console.error('Error creating person:', error);
-      alert('Failed to create person. Please try again.');
+      console.error('Error creating contact:', error);
+      alert('Failed to create contact. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -184,9 +203,9 @@ export default function PeoplePage() {
           <Group gap="sm">
             <Button
               leftSection={<IconPlus size={16} />}
-              onClick={handleAddPerson}
+              onClick={handleAddContact}
             >
-              Add person
+              Add contact
             </Button>
       {/*      <Button
               variant="outline"
@@ -226,9 +245,9 @@ export default function PeoplePage() {
           </Stack>
         </Paper>
 
-        {/* People Table */}
-        <PeopleTable
-          people={people}
+        {/* Contacts Table */}
+        <ContactTable
+          contacts={contacts}
           loading={loading}
           onRowClick={handleRowClick}
           showTitle={false}
@@ -237,12 +256,12 @@ export default function PeoplePage() {
         {/* Pagination and count */}
         <Paper p="sm" withBorder>
           <Group justify="space-between">
-            <span>{totalCount} {totalCount === 1 ? 'person' : 'people'} found</span>
+            <span>{totalCount} {totalCount === 1 ? 'contact' : 'contacts'} found</span>
             <Group gap="xs">
               <ActionIcon
                 variant="filled"
                 disabled={!previousUrl}
-                onClick={() => previousUrl && fetchPeople(previousUrl)}
+                onClick={() => previousUrl && fetchContacts(previousUrl)}
                 aria-label="Previous page"
               >
                 <IconChevronLeft size={18} />
@@ -250,7 +269,7 @@ export default function PeoplePage() {
               <ActionIcon
                 variant="filled"
                 disabled={!nextUrl}
-                onClick={() => nextUrl && fetchPeople(nextUrl)}
+                onClick={() => nextUrl && fetchContacts(nextUrl)}
                 aria-label="Next page"
               >
                 <IconChevronRight size={18} />
@@ -260,26 +279,26 @@ export default function PeoplePage() {
         </Paper>
       </Stack>
 
-      {/* Add Person Modal */}
+      {/* Add Contact Modal */}
       <Modal
         opened={addModalOpen}
         onClose={() => setAddModalOpen(false)}
-        title="Add New Person"
+        title="Add New Contact"
         size="md"
       >
-        <form onSubmit={form.onSubmit(handleSubmitPerson)}>
+        <form onSubmit={form.onSubmit(handleSubmitContact)}>
           <Stack gap="md">
             <TextInput
               label="Discord ID"
               placeholder="Enter Discord ID"
               required
-              {...form.getInputProps('did')}
+              {...form.getInputProps('discord_id')}
             />
             <TextInput
               label="Name"
               placeholder="Enter name"
               required
-              {...form.getInputProps('name')}
+              {...form.getInputProps('full_name')}
             />
             <TextInput
               label="Email"
@@ -308,7 +327,7 @@ export default function PeoplePage() {
                 Cancel
               </Button>
               <Button type="submit" loading={submitting}>
-                Add Person
+                Add Contact
               </Button>
             </Group>
           </Stack>
