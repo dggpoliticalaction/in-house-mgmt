@@ -8,7 +8,7 @@ from auditlog.models import LogEntry
 from django.db.models import Count, Q, F
 from django.contrib.contenttypes.models import ContentType
 
-from .models import Ticket, TicketStatus, TicketType, TicketComment
+from .models import Ticket, TicketStatus, TicketType, TicketComment, TicketAskStatus
 from .serializers import TicketSerializer, TicketCommentSerializer, TicketTimelineSerializer
 
 # TODO: Handle permissions for views in file
@@ -125,7 +125,12 @@ class TicketViewSet(viewsets.ModelViewSet):
         )
 
         return Response(TicketCommentSerializer(comment, context={'request': request}).data, status=status.HTTP_201_CREATED)
-
+    @action(detail=False, methods=["get"])
+    def get_ask_statuses(self, request):
+        return Response([
+            {"value": value, "label": label}
+            for value, label in TicketAskStatus.choices
+        ])
 
     @action(detail=True, methods=["get"])
     def timeline(self, request, pk=None):
@@ -185,3 +190,4 @@ class TicketViewSet(viewsets.ModelViewSet):
         """
         user = self.request.user
         serializer.save(reported_by=user if user and user.is_authenticated else None)
+

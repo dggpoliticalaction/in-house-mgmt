@@ -26,7 +26,7 @@ class TicketAskStatus(models.TextChoices):
     AGREED = "AGREED", "Agreed"
     DELIVERED = "DELIVERED", "Delivered"
     FAILED = "FAILED", "Failed"
-    GHOSTED = "GHOSTED", "Gho"
+    GHOSTED = "GHOSTED", "Ghosted"
 
 class Ticket(models.Model):
     """
@@ -155,7 +155,7 @@ class TicketAsks(models.Model):
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name="ticket_audit_logs",
+        related_name="ticket_asks",
     )
 
    # user_id = models.ForeignKey(
