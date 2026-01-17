@@ -1,6 +1,6 @@
 import { type Organization } from '@/app/components/OrganizationsTable';
 import { type GroupMember } from '@/app/components/OrganizationMembersTable';
-import { type PersonWithRole } from '@/app/components/RolesTable';
+import { type ContactWithRole } from '@/app/components/RolesTable';
 import { type UseFormReturnType } from '@mantine/form';
 
 // Form value types
@@ -9,7 +9,7 @@ export interface AddOrgFormValues {
 }
 
 export interface AddMemberFormValues {
-  person: string;
+  contact: string;
   access_level: string;
 }
 
@@ -18,7 +18,7 @@ export interface AccessLevelFormValues {
 }
 
 export interface AssignRoleFormValues {
-  person: string;
+  contact: string;
   access_level: string;
 }
 
@@ -31,7 +31,7 @@ interface UseHandlersProps {
   setAddMemberOpen: (open: boolean) => void;
   setEditMemberOpen: (open: boolean) => void;
   setSelectedMember: (member: GroupMember | null) => void;
-  setSelectedPerson: (person: PersonWithRole | null) => void;
+  setSelectedContact: (contact: ContactWithRole | null) => void;
   setAssignRoleOpen: (open: boolean) => void;
   setEditRoleOpen: (open: boolean) => void;
   setSubmitting: (submitting: boolean) => void;
@@ -46,12 +46,12 @@ interface UseHandlersProps {
   // Fetch functions
   fetchOrganizations: () => Promise<void>;
   fetchOrgMembers: (gid: number) => Promise<void>;
-  fetchPeopleWithRoles: () => Promise<void>;
+  fetchContactsWithRoles: () => Promise<void>;
 
   // Current selections
   selectedOrg: Organization | null;
   selectedMember: GroupMember | null;
-  selectedPerson: PersonWithRole | null;
+  selectedContact: ContactWithRole | null;
 }
 
 export function useAdminHandlers(props: UseHandlersProps) {
@@ -63,7 +63,7 @@ export function useAdminHandlers(props: UseHandlersProps) {
     setAddMemberOpen,
     setEditMemberOpen,
     setSelectedMember,
-    setSelectedPerson,
+    setSelectedContact,
     setAssignRoleOpen,
     setEditRoleOpen,
     setSubmitting,
@@ -74,10 +74,10 @@ export function useAdminHandlers(props: UseHandlersProps) {
     editRoleForm,
     fetchOrganizations,
     fetchOrgMembers,
-    fetchPeopleWithRoles,
+    fetchContactsWithRoles,
     selectedOrg,
     selectedMember,
-    selectedPerson,
+    selectedContact,
   } = props;
 
   // ===== Organization Handlers =====
@@ -158,7 +158,7 @@ export function useAdminHandlers(props: UseHandlersProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          person: values.person,
+          contact: values.contact,
           group: selectedOrg.gid,
           access_level: parseInt(values.access_level)
         })
@@ -233,14 +233,14 @@ export function useAdminHandlers(props: UseHandlersProps) {
 
   // ===== Role Handlers =====
 
-  const handleAssignRole = (person: PersonWithRole) => {
-    setSelectedPerson(person);
+  const handleAssignRole = (contact: ContactWithRole) => {
+    setSelectedContact(contact);
     assignRoleForm.reset();
     setAssignRoleOpen(true);
   };
 
   const handleSubmitAssignRole = async (values: AccessLevelFormValues) => {
-    if (!selectedPerson) return;
+    if (!selectedContact) return;
 
     setSubmitting(true);
     try {
@@ -248,7 +248,7 @@ export function useAdminHandlers(props: UseHandlersProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          person: selectedPerson.did,
+          contact: selectedContact.discord_id,
           access_level: parseInt(values.access_level)
         })
       });
@@ -257,7 +257,7 @@ export function useAdminHandlers(props: UseHandlersProps) {
 
       setAssignRoleOpen(false);
       assignRoleForm.reset();
-      fetchPeopleWithRoles();
+      fetchContactsWithRoles();
     } catch (error) {
       console.error('Error assigning role:', error);
       alert('Failed to assign role. Please try again.');
@@ -266,18 +266,18 @@ export function useAdminHandlers(props: UseHandlersProps) {
     }
   };
 
-  const handleEditRole = (person: PersonWithRole) => {
-    setSelectedPerson(person);
-    editRoleForm.setValues({ access_level: person.access_level?.toString() || '1' });
+  const handleEditRole = (contact: ContactWithRole) => {
+    setSelectedContact(contact);
+    editRoleForm.setValues({ access_level: contact.access_level?.toString() || '1' });
     setEditRoleOpen(true);
   };
 
   const handleSubmitEditRole = async (values: AccessLevelFormValues) => {
-    if (!selectedPerson || !selectedPerson.role_id) return;
+    if (!selectedContact || !selectedContact.role_id) return;
 
     setSubmitting(true);
     try {
-      const response = await fetch(`/api/general-roles/${selectedPerson.role_id}/`, {
+      const response = await fetch(`/api/general-roles/${selectedContact.role_id}/`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -288,7 +288,7 @@ export function useAdminHandlers(props: UseHandlersProps) {
       if (!response.ok) throw new Error('Failed to update role');
 
       setEditRoleOpen(false);
-      fetchPeopleWithRoles();
+      fetchContactsWithRoles();
     } catch (error) {
       console.error('Error updating role:', error);
       alert('Failed to update role. Please try again.');
@@ -297,17 +297,17 @@ export function useAdminHandlers(props: UseHandlersProps) {
     }
   };
 
-  const handleRemoveRole = (person: PersonWithRole) => {
-    if (!person.role_id) return;
-    if (!confirm(`Remove role for ${person.name}? The person will remain in the system.`)) return;
+  const handleRemoveRole = (contact: ContactWithRole) => {
+    if (!contact.role_id) return;
+    if (!confirm(`Remove role for ${contact.full_name}? The contact will remain in the system.`)) return;
 
     setSubmitting(true);
-    fetch(`/api/general-roles/${person.role_id}/`, {
+    fetch(`/api/general-roles/${contact.role_id}/`, {
       method: 'DELETE'
     })
       .then((response) => {
         if (!response.ok) throw new Error('Failed to remove role');
-        fetchPeopleWithRoles();
+        fetchContactsWithRoles();
       })
       .catch((error) => {
         console.error('Error removing role:', error);

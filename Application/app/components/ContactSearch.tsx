@@ -14,9 +14,10 @@ import {
 import { useState, useEffect } from 'react';
 import { IconSearch } from '@tabler/icons-react';
 
-interface Person {
-  did: string;
-  name: string;
+interface Contact {
+  id: number;
+  discord_id: string;
+  full_name: string;
   email: string | null;
   phone: string | null;
 }
@@ -28,14 +29,13 @@ interface VolunteerResponse {
   response: number;
 }
 
-interface VolunteerSearchProps {
+interface ContactSearchProps {
   reachId: number;
 }
 
-//TODO: Rename to ContactSearch
-export default function VolunteerSearch({ reachId }: VolunteerSearchProps) {
+export default function ContactSearch({ reachId }: ContactSearchProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<Person[]>([]);
+  const [searchResults, setSearchResults] = useState<Contact[]>([]);
   const [responses, setResponses] = useState<Map<string, VolunteerResponse>>(new Map());
   const [loading, setLoading] = useState(false);
 
@@ -69,18 +69,18 @@ export default function VolunteerSearch({ reachId }: VolunteerSearchProps) {
 
     try {
       setLoading(true);
-      const response = await fetch(`/api/people/search/?q=${encodeURIComponent(query)}`);
+      const response = await fetch(`/api/contacts/?q=${encodeURIComponent(query)}`);
       const data = await response.json();
-      setSearchResults(data);
+      setSearchResults(data.results || []);
     } catch (error) {
-      console.error('Error searching people:', error);
+      console.error('Error searching contacts:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSetResponse = async (person: Person, responseValue: number) => {
-    const existingResponse = responses.get(person.did);
+  const handleSetResponse = async (contact: Contact, responseValue: number) => {
+    const existingResponse = responses.get(contact.discord_id);
 
     try {
       if (existingResponse && existingResponse.did && existingResponse.rid === reachId) {
@@ -92,7 +92,7 @@ export default function VolunteerSearch({ reachId }: VolunteerSearchProps) {
           },
           body: JSON.stringify({
             rid: reachId,
-            did: person.did,
+            did: contact.discord_id,
             response: responseValue
           })
         });
@@ -106,13 +106,13 @@ export default function VolunteerSearch({ reachId }: VolunteerSearchProps) {
 
         // Update local state
         const newResponses = new Map(responses);
-        newResponses.set(person.did, data);
+        newResponses.set(contact.discord_id, data);
         setResponses(newResponses);
       } else {
         // Create new response
         const payload = {
           rid: reachId,
-          did: person.did,
+          did: contact.discord_id,
           response: responseValue
         };
         console.log('Creating response with payload:', payload);
@@ -136,7 +136,7 @@ export default function VolunteerSearch({ reachId }: VolunteerSearchProps) {
 
         // Update local state
         const newResponses = new Map(responses);
-        newResponses.set(person.did, data);
+        newResponses.set(contact.discord_id, data);
         setResponses(newResponses);
       }
     } catch (error) {
@@ -144,8 +144,8 @@ export default function VolunteerSearch({ reachId }: VolunteerSearchProps) {
     }
   };
 
-  const getResponseBadge = (person: Person) => {
-    const response = responses.get(person.did);
+  const getResponseBadge = (contact: Contact) => {
+    const response = responses.get(contact.discord_id);
     if (!response) return null;
 
     if (response.response === 1) {
@@ -159,10 +159,10 @@ export default function VolunteerSearch({ reachId }: VolunteerSearchProps) {
   return (
     <Paper p="md" withBorder>
       <Stack gap="md">
-        <Text size="sm" fw={500}>Volunteer Responses To Reach</Text>
+        <Text size="sm" fw={500}>Contact Responses To Reach</Text>
 
         <TextInput
-          placeholder="Search volunteers by name, email, or ID..."
+          placeholder="Search contacts by name, email, or ID..."
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
           leftSection={<IconSearch size={16} />}
@@ -170,25 +170,25 @@ export default function VolunteerSearch({ reachId }: VolunteerSearchProps) {
 
         {searchResults.length > 0 && (
           <Stack gap="xs">
-            {searchResults.map((person) => {
-              const currentResponse = responses.get(person.did);
+            {searchResults.map((contact) => {
+              const currentResponse = responses.get(contact.discord_id);
               return (
-                <Paper key={person.did} p="sm" withBorder bg="gray.0">
+                <Paper key={contact.discord_id} p="sm" withBorder bg="gray.0">
                   <Group justify="space-between" wrap="nowrap">
                     <Box style={{ flex: 1, minWidth: 0 }}>
-                      <Text size="sm" fw={500} truncate>{person.name}</Text>
+                      <Text size="sm" fw={500} truncate>{contact.full_name}</Text>
                       <Text size="xs" c="dimmed" truncate>
-                        {person.email || person.did}
+                        {contact.email || contact.discord_id}
                       </Text>
                     </Box>
 
                     <Group gap="xs" wrap="nowrap">
-                      {getResponseBadge(person)}
+                      {getResponseBadge(contact)}
                       <Button
                         size="xs"
                         color="green"
                         variant={currentResponse?.response === 1 ? 'filled' : 'light'}
-                        onClick={() => handleSetResponse(person, 1)}
+                        onClick={() => handleSetResponse(contact, 1)}
                       >
                         Accept
                       </Button>
@@ -196,7 +196,7 @@ export default function VolunteerSearch({ reachId }: VolunteerSearchProps) {
                         size="xs"
                         color="red"
                         variant={currentResponse?.response === 0 ? 'filled' : 'light'}
-                        onClick={() => handleSetResponse(person, 0)}
+                        onClick={() => handleSetResponse(contact, 0)}
                       >
                         Reject
                       </Button>
