@@ -8,7 +8,6 @@ import ContactSearch from "./ContactSearch"
 
 export default function TicketView({ticket} : { ticket: Ticket}) {
 
-  console.log(ticket)
   return <Container size="xl" py="xl">
     <Grid>
       <Grid.Col span={{ base: 12, md: 8 }}>

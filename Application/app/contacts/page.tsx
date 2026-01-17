@@ -11,8 +11,10 @@ import {
   Stack,
   Modal,
   MultiSelect,
-  ActionIcon
+  ActionIcon,
+  NumberInput
 } from '@mantine/core';
+import { DateInput } from '@mantine/dates'
 import { IconPlus, IconFileUpload, IconSearch, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
 import { useForm } from '@mantine/form';
@@ -25,6 +27,10 @@ export default function ContactsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGroup, setSelectedGroup] = useState<string | null>('all');
   const [selectedTag, setSelectedTag] = useState<string | null>('all');
+  const [startDate, setStartDate] = useState<string | null>('')
+  const [endDate, setEndDate] = useState<string | null>('')
+  const [minEvents, setMinEvents] = useState<number>()
+  const [minTickets, setMinTickets] = useState<number>()
   const [tags, setTags] = useState<Tag[]>([]);
   const [nextUrl, setNextUrl] = useState<string | null>(null);
   const [previousUrl, setPreviousUrl] = useState<string | null>(null);
@@ -58,7 +64,7 @@ export default function ContactsPage() {
   // Fetch contacts whenever filters change (reset to first page)
   useEffect(() => {
     fetchContacts();
-  }, [searchQuery, selectedGroup, selectedTag]);
+  }, [searchQuery, selectedGroup, selectedTag, minEvents, minTickets, startDate, endDate]);
 
   const fetchGroupsAndTags = async () => {
     try {
@@ -89,7 +95,12 @@ export default function ContactsPage() {
       // If no URL provided, build the initial query
       if (!fetchUrl) {
         const params = new URLSearchParams();
-        if (searchQuery) params.append('q', searchQuery);
+        if (searchQuery) params.append('search', searchQuery);
+        if (minEvents) params.append('min_events', minEvents.toString());
+        if (minTickets) params.append('min_tickets', minTickets.toString());
+        if (startDate) params.append('start_date', startDate)
+        if (endDate) params.append('start_date', endDate)
+
         if (selectedTag && selectedTag !== 'all') params.append('tag', selectedTag);
         fetchUrl = `/api/contacts/?${params}`;
       }
@@ -237,6 +248,38 @@ export default function ContactsPage() {
                 onChange={setSelectedTag}
                 data={tagOptions}
                 style={{ minWidth: 200 }}
+              />
+              <NumberInput
+                label="Past Attended Events"
+                placeholder="bap"
+                value={minEvents}
+                onChange={
+                  num => {
+                    setMinEvents(typeof num === "number" ? num : 0)
+                  }
+                }
+              />
+              <NumberInput
+                label="Closed Tickets"
+                placeholder="boop"
+                value={minTickets}
+                onChange={
+                  num => {
+                    setMinTickets(typeof num === "number" ? num : 0)
+                  }
+                }
+              />
+              <DateInput 
+                label="Search Start Time"
+                value={startDate}
+                onChange={setStartDate}
+                placeholder="Date input"
+              />
+              <DateInput 
+                label="Search End Time"
+                onChange={setEndDate}
+                value={endDate}
+                placeholder="Date input"
               />
             </Group>
             <Group gap="sm">
