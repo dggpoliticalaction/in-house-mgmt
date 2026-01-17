@@ -18,14 +18,15 @@ import {
 } from '@mantine/core';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
-import TicketTable, { type Reach } from '@/app/components/TicketTable';
-import VolunteerSearch from '@/app/components/VolunteerSearch';
+import TicketTable from '@/app/components/TicketTable';
+import ContactSearch from '@/app/components/ContactSearch';
+import { type Ticket } from '@/app/components/ticket-utils';
 
 // TODO: /tickets/123 doesn't work, we should make sure the url reflects the current ticket
 // TODO: Rename reaches/calls to use Ticket as name
 export default function TicketPage() {
-  const [reaches, setReaches] = useState<Reach[]>([]);
-  const [selectedReach, setSelectedReach] = useState<Reach | null>(null);
+  const [reaches, setTicketes] = useState<Ticket[]>([]);
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('in-progress');
   const [priority, setPriority] = useState('p3');
@@ -37,14 +38,14 @@ export default function TicketPage() {
   const statuses = ['all', 'open', 'in-progress', 'blocked', 'completed'];
 
   useEffect(() => {
-    fetchReaches();
+    fetchTicketes();
   }, []);
 
   const handleReset = () => {
-    fetchReaches();
+    fetchTicketes();
   };
 
-  const fetchReaches = async (url?: string) => {
+  const fetchTicketes = async (url?: string) => {
     try {
       setLoading(true);
       const fetchUrl = url || '/api/tickets/';
@@ -52,7 +53,7 @@ export default function TicketPage() {
       console.log('Fetch response:', response);
       const data = await response.json();
       console.log('Fetched reaches data:', data);
-      setReaches(data.results);
+      setTicketes(data.results);
       setTotalCount(data.count);
       setNextUrl(data.next);
       setPreviousUrl(data.previous);
@@ -63,16 +64,16 @@ export default function TicketPage() {
     }
   };
 
-  const handleRowClick = (reach: Reach) => {
-    setSelectedReach(reach);
+  const handleRowClick = (reach: Ticket) => {
+    setSelectedTicket(reach);
   };
 
   const handleBackToTable = () => {
-    setSelectedReach(null);
+    setSelectedTicket(null);
   };
 
 
-  // TODO: Use code in ReachesTable.tsx
+  // TODO: Use code in TicketesTable.tsx
   const getPriorityColor = (priority: number) => {
     if (priority < 1) return 'red';
     if (priority < 3) return 'orange';
@@ -81,7 +82,7 @@ export default function TicketPage() {
     return 'gray';
   };
 
-  // TODO: Use code in ReachesTable.tsx
+  // TODO: Use code in TicketesTable.tsx
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'OPEN': return 'gray';
@@ -98,14 +99,14 @@ export default function TicketPage() {
     <Container size="xl" py="xl">
       <Grid>
         {/* Main Content Area */}
-        <Grid.Col span={{ base: 12, md: selectedReach ? 8 : 12 }}>
+        <Grid.Col span={{ base: 12, md: selectedTicket ? 8 : 12 }}>
           <Stack gap="md">
             {/* Header */}
             <Group justify="space-between">
               <Title order={2}>
-                {selectedReach ? selectedReach.title : 'Ticket Queue Management'}
+                {selectedTicket ? selectedTicket.title : 'Ticket Queue Management'}
               </Title>
-              {selectedReach && (
+              {selectedTicket && (
                 <Button variant="outline" onClick={handleBackToTable}>
                   Back to List
                 </Button>
@@ -113,7 +114,7 @@ export default function TicketPage() {
             </Group>
 
             {/* Status Filters */}
-            {!selectedReach && (
+            {!selectedTicket && (
               <Paper p="md" withBorder>
                 <Stack gap="md">
                   <Group gap="xs">
@@ -178,7 +179,7 @@ export default function TicketPage() {
                       <ActionIcon
                         variant="filled"
                         disabled={!previousUrl}
-                        onClick={() => previousUrl && fetchReaches(previousUrl)}
+                        onClick={() => previousUrl && fetchTicketes(previousUrl)}
                         aria-label="Previous page"
                       >
                         <IconChevronLeft size={18} />
@@ -186,7 +187,7 @@ export default function TicketPage() {
                       <ActionIcon
                         variant="filled"
                         disabled={!nextUrl}
-                        onClick={() => nextUrl && fetchReaches(nextUrl)}
+                        onClick={() => nextUrl && fetchTicketes(nextUrl)}
                         aria-label="Next page"
                       >
                         <IconChevronRight size={18} />
