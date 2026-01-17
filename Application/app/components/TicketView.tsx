@@ -27,8 +27,6 @@ export default function TicketView({ticket} : { ticket: Ticket}) {
           {/* Show call instructions for selected reach */}
           <Actions ticketId={ticket.id} />
 
-          {/* Volunteer Search and Responses */}
-          <ContactSearch reachId={ticket.id} />
         </Stack>
       </Grid.Col>
     </Grid>
