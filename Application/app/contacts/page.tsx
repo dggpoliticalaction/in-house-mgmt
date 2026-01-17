@@ -99,7 +99,7 @@ export default function ContactsPage() {
         if (minEvents) params.append('min_events', minEvents.toString());
         if (minTickets) params.append('min_tickets', minTickets.toString());
         if (startDate) params.append('start_date', startDate)
-        if (endDate) params.append('start_date', endDate)
+        if (endDate) params.append('end_date', endDate)
 
         if (selectedTag && selectedTag !== 'all') params.append('tag', selectedTag);
         fetchUrl = `/api/contacts/?${params}`;
