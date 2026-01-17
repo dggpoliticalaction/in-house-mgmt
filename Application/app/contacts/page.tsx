@@ -15,11 +15,13 @@ import {
 } from '@mantine/core';
 import { IconPlus, IconFileUpload, IconSearch, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from '@mantine/form';
 import PeopleTable, { type Person, type Group as PersonGroup, type Tag } from '@/app/components/PeopleTable';
 import './page.css';
 
 export default function PeoplePage() {
+  const router = useRouter();
   const [people, setPeople] = useState<Person[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -119,8 +121,7 @@ export default function PeoplePage() {
   };
 
   const handleRowClick = (person: Person) => {
-    // TODO: Navigate to person detail page or show modal
-    console.log('Clicked person:', person);
+    router.push(`/contacts/${person.id}`);
   };
 
   const handleAddPerson = () => {

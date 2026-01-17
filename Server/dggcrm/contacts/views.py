@@ -10,7 +10,7 @@ from .serializers import (
     TagSerializer,
     TagAssignmentSerializer,
 )
-from dggcrm.tickets.models import TicketAuditLog, TicketType
+from dggcrm.tickets.models import TicketAsks, TicketAskStatus, TicketType
 
 # TODO: Add permission_classes to these views
 class ContactViewSet(viewsets.ModelViewSet):
@@ -68,51 +68,24 @@ class ContactViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], url_path='acceptance-rate')
     def acceptance_rate(self, request, pk=None):
         """
-        Calculate the acceptance rate for a contact based on ticket audit logs,
-        broken down by ticket type.
+        Get ticket ask statistics for a contact, broken down by ticket type.
 
-        Returns a JSON with acceptance rates for each ticket type:
-        - rate: -1 if the contact was never offered that ticket type,
-                otherwise percentage (0-100) of accepted offers
-        - total: total number of offers (audit logs with acceptance data)
-
-        The acceptance field in TicketAuditLog.data:
-        - 1 = accepted
-        - 0 = not accepted
+        Returns a JSON with counts for each TicketAskStatus per ticket type.
         """
         contact = self.get_object()
         response_data = {}
 
-        # For each ticket type, calculate acceptance rate
         for ticket_type_value, ticket_type_label in TicketType.choices:
-            # Filter audit logs for this specific ticket type
-            audit_logs = TicketAuditLog.objects.filter(
-                ticket__contact=contact,
+            ticket_asks = TicketAsks.objects.filter(
+                contact=contact,
                 ticket__ticket_type=ticket_type_value
-            ).values_list('data', flat=True)
+            )
 
-            total_offers = 0
-            accepted_offers = 0
+            status_counts = {status.value: 0 for status in TicketAskStatus}
+            for ask in ticket_asks:
+                status_counts[ask.status] += 1
 
-            # Count offers and acceptances for this ticket type
-            for data in audit_logs:
-                if data and 'acceptance' in data:
-                    total_offers += 1
-                    if data['acceptance'] == 1:
-                        accepted_offers += 1
-
-            # Calculate rate for this ticket type
-            if total_offers == 0:
-                response_data[ticket_type_value] = {
-                    "rate": -1,
-                    "total": 0
-                }
-            else:
-                acceptance_percentage = (accepted_offers / total_offers) * 100
-                response_data[ticket_type_value] = {
-                    "rate": round(acceptance_percentage, 2),
-                    "total": total_offers
-                }
+            response_data[ticket_type_value] = status_counts
 
         return Response(response_data)
 

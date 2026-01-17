@@ -20,6 +20,14 @@ class TicketType(models.TextChoices):
     CONFIRM = "CONFIRM", "Confirm event participation"
     # TODO: What other types do we want?
 
+class TicketAskStatus(models.TextChoices):
+    UNKNOWN = "UNKNOWN", "Unknown"
+    REJECTED = "REJECTED", "Rejected"
+    AGREED = "AGREED", "Agreed"
+    DELIVERED = "DELIVERED", "Delivered"
+    FAILED = "FAILED", "Failed"
+    GHOSTED = "GHOSTED", "Ghosted"
+
 class Ticket(models.Model):
     """
     Represents a task that must be accomplished by a user.
@@ -135,7 +143,7 @@ class TicketComment(models.Model):
     def __str__(self):
         return f"Comment on {self.ticket_id}"
 
-class TicketAuditLog(models.Model):
+class TicketAsks(models.Model):
     ticket = models.ForeignKey(
         "tickets.Ticket",
         on_delete=models.CASCADE,
@@ -157,12 +165,18 @@ class TicketAuditLog(models.Model):
    #     on_delete=models.SET_NULL,
    #  )
 
-    data = models.JSONField()
+    status = models.CharField(
+        max_length=15,
+        choices=TicketAskStatus.choices,
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # Change field on edit
+    edited_at = models.DateTimeField(auto_now_add=True)
+
     class Meta:
-        db_table = 'ticket_audit_logs'
+        db_table = 'ticket_asks'
         ordering = ["-created_at"]
 
 # TODO: implement missing tables from DB diagram
