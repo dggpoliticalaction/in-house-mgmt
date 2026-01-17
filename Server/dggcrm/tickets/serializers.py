@@ -32,6 +32,10 @@ class TicketSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'modified_at', 'status_display', 'type_display', 'assigned_to_username', 'reported_by_username', 'priority_display', 'reported_by']
 
 
+class TicketClaimSerializer(serializers.Serializer):
+    pass
+
+
 class TicketCommentSerializer(serializers.ModelSerializer):
     author_display = serializers.CharField(
         source="author.get_full_name",

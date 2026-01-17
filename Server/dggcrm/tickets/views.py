@@ -5,11 +5,12 @@ from rest_framework.response import Response
 from rest_framework import status
 from auditlog.models import LogEntry
 
+from django.http import HttpResponseBadRequest
 from django.db.models import Count, Q, F
 from django.contrib.contenttypes.models import ContentType
 
 from .models import Ticket, TicketStatus, TicketType, TicketComment
-from .serializers import TicketSerializer, TicketCommentSerializer, TicketTimelineSerializer
+from .serializers import TicketSerializer, TicketClaimSerializer, TicketCommentSerializer, TicketTimelineSerializer
 
 # TODO: Handle permissions for views in file
 class TicketViewSet(viewsets.ModelViewSet):
@@ -23,7 +24,7 @@ class TicketViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
 
-        status = self.request.query_params.get('status')
+        ticket_status = self.request.query_params.get('status')
         ticket_type = self.request.query_params.get('type')
         priority = self.request.query_params.get('priority')
         assigned_to_id = self.request.query_params.get('assigned_to')
@@ -31,8 +32,8 @@ class TicketViewSet(viewsets.ModelViewSet):
         event_id = self.request.query_params.get('event')
         contact_id = self.request.query_params.get('contact')
 
-        if status is not None:
-            queryset = queryset.filter(ticket_status=status)
+        if ticket_status is not None:
+            queryset = queryset.filter(ticket_status=ticket_status)
 
         if ticket_type is not None:
             queryset = queryset.filter(ticket_type=ticket_type)
@@ -108,6 +109,29 @@ class TicketViewSet(viewsets.ModelViewSet):
 
         return Response(qs)
 
+
+    @action(detail=True, methods=['post', 'delete'], url_path='claim', serializer_class=TicketClaimSerializer,)
+    def claim(self, request, pk=None):
+        # POST will claim the ticket, DELETE will unclaim
+        ticket = self.get_object()
+
+        if not request.user.is_authenticated:
+            return HttpResponseBadRequest("Error: must be logged in to claim/unclaim ticket")
+
+        if request.method == "DELETE":
+            # Verify that unclaiming is permitted
+            if ticket.assigned_to != request.user:
+                return HttpResponseBadRequest("Error: cannot unclaim ticket you are not assigned to")
+
+            ticket.assigned_to = None
+            ticket.save(update_fields=["assigned_to"])
+        elif request.method == "POST":
+            # TODO: limit claiming of already claimed tickets
+            ticket.assigned_to = request.user
+            ticket.save(update_fields=["assigned_to"])
+
+        serializer = TicketSerializer(ticket, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'], url_path='comment', serializer_class=TicketCommentSerializer)
     def comment(self, request, pk=None):
