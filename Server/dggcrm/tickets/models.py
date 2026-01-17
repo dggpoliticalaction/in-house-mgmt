@@ -26,7 +26,7 @@ class TicketAskStatus(models.TextChoices):
     AGREED = "AGREED", "Agreed"
     DELIVERED = "DELIVERED", "Delivered"
     FAILED = "FAILED", "Failed"
-    GHOSTED = "GHOSTED", "Ghosted"
+    GHOSTED = "GHOSTED", "Gho"
 
 class Ticket(models.Model):
     """
