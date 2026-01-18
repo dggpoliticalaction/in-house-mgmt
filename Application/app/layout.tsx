@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
 import '@mantine/core/styles.css';
+import '@mantine/dates/styles.css';
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+
 import { Geist, Geist_Mono } from "next/font/google";
 import NavbarSimple from './components/Navbar/Navbar';
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from '@mantine/core';
 import { theme } from './lib/theme';
+
+dayjs.extend(customParseFormat);
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

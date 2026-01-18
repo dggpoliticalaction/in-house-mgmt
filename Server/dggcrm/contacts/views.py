@@ -1,7 +1,7 @@
 from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
-from django.db.models import Q
+from django.db.models import Q, Count
 
 from .models import Contact, Tag, TagAssignments
 from .serializers import (
@@ -48,6 +48,12 @@ class ContactViewSet(viewsets.ModelViewSet):
 
         event_id = self.request.query_params.get("event")
         tag = self.request.query_params.get("tag")
+        min_tickets = self.request.query_params.get("min_tickets")
+        min_events = self.request.query_params.get("min_events")
+        start_date = self.request.query_params.get("start_date")
+        end_date = self.request.query_params.get("end_date")
+        min_events = self.request.query_params.get("min_events")
+
 
         if event_id:
             queryset = queryset.filter(
@@ -60,6 +66,23 @@ class ContactViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(taggings__tag__id=tag)
             else:
                 queryset = queryset.filter(taggings__tag__name__iexact=tag)
+        date_filter = Q()
+        if start_date:
+            date_filter &= Q(event_participations__event__created_at__gte=start_date)
+        if end_date:
+            date_filter &= Q(event_participations__event__created_at__lte=end_date)
+
+        if min_tickets and min_tickets.isdigit():
+            min_tickets = int(min_tickets)
+            queryset = queryset.annotate(
+                num_tickets_in_range=Count("event_participations", filter=date_filter)
+            ).filter(num_tickets_in_range__gte=min_tickets)
+        if min_events and min_events.isdigit():
+            min_events = int(min_events)
+            queryset = queryset.annotate(
+                num_events_in_range=Count("tickets", filter=date_filter)
+            ).filter(num_events_in_range__gte=min_events)
+        
 
         return queryset
 
