@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from "react"
 import { Grid, Stack, Group, Title, Button, Paper, Box, Badge, Divider, Text, Timeline, Container } from "@mantine/core"
 import { useRouter } from "next/navigation"
 import { getStatusColor, getPriorityColor } from "./TicketTable"
@@ -24,10 +25,8 @@ export default function TicketView({ticket} : { ticket: Ticket}) {
         <Stack gap='md'>
           <TicketMetadataCard ticket={ticket}/>
           {/* Show call instructions for selected reach */}
-          <Actions />
+          <Actions ticketId={ticket.id} />
 
-          {/* Volunteer Search and Responses */}
-          <ContactSearch reachId={ticket.id} />
         </Stack>
       </Grid.Col>
     </Grid>
@@ -128,24 +127,38 @@ function ActivityCard() {
   </Paper>
 }
 
-function Actions() {
+function Actions({ ticketId }: { ticketId: number }) {
+  const [askStatuses, setAskStatuses] = useState<{ value: string; label: string }[]>([])
+
+  useEffect(() => {
+    fetch(`/api/tickets/get_ask_statuses/`)
+      .then(res => res.json())
+      .then(data => setAskStatuses(data))
+      .catch(console.error)
+    console.log(askStatuses)
+  }, [])
+
+  const handleAction = (status: string) => {
+    // TODO: Implement API call to record ask status for ticket
+    console.log(`Recording ask status: ${status} for ticket ${ticketId}`)
+  }
+
   return <Paper p="md" withBorder>
     <Title order={5} mb="md">Actions</Title>
     <Stack gap="xs">
-      <Button
-        fullWidth
-        variant="filled"
-        color="red"
-      >
-        Mark as Blocked
-      </Button>
-      <Button
-        fullWidth
-        variant="outline"
-        color="gray"
-      >
-        Close Ticket
-      </Button>
+      {askStatuses
+        .filter(s => s.value !== 'UNKNOWN')
+        .map(status => (
+          <Button
+            key={status.value}
+            fullWidth
+            variant="light"
+            color="gray"
+            onClick={() => handleAction(status.value)}
+          >
+            {status.label}
+          </Button>
+        ))}
     </Stack>
   </Paper>
 }

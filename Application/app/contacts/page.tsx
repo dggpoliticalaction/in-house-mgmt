@@ -15,11 +15,13 @@ import {
 } from '@mantine/core';
 import { IconPlus, IconFileUpload, IconSearch, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from '@mantine/form';
 import ContactTable, { type Contact, type Group as ContactGroup, type Tag } from '@/app/components/ContactTable';
 import './page.css';
 
 export default function ContactsPage() {
+  const router = useRouter();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -120,6 +122,7 @@ export default function ContactsPage() {
 
   const handleRowClick = (contact: Contact) => {
     // TODO: Navigate to contact detail page or show modal
+    router.push(`/contacts/${contact.id}`);
     console.log('Clicked contact:', contact);
   };
 
