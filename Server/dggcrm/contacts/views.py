@@ -2,7 +2,7 @@ from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import Q
+from django.db.models import Q, Count
 
 from .models import Contact, Tag, TagAssignments
 from .serializers import (
@@ -65,30 +65,37 @@ class ContactViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    @action(detail=True, methods=['get'], url_path='acceptance-rate')
+    @action(detail=True, methods=["get"], url_path="acceptance-rate")
     def acceptance_rate(self, request, pk=None):
         """
         Get ticket ask statistics for a contact, broken down by ticket type.
-
         Returns a JSON with counts for each TicketAskStatus per ticket type.
         """
         contact = self.get_object()
-        response_data = {}
 
-        for ticket_type_value, ticket_type_label in TicketType.choices:
-            ticket_asks = TicketAsks.objects.filter(
-                contact=contact,
-                ticket__ticket_type=ticket_type_value
-            )
+        # Base queryset aggregated in DB
+        qs = (
+            TicketAsks.objects
+            .filter(contact=contact)
+            .values("ticket__ticket_type", "status")
+            .annotate(count=Count("id"))
+        )
 
-            status_counts = {status.value: 0 for status in TicketAskStatus}
-            for ask in ticket_asks:
-                status_counts[ask.status] += 1
+        # Initialize response with zeros
+        response_data = {
+            ticket_type_value: {
+                status.value: 0 for status in TicketAskStatus
+            }
+            for ticket_type_value, _ in TicketType.choices
+        }
 
-            response_data[ticket_type_value] = status_counts
+        # Fill in actual counts
+        for row in qs:
+            ticket_type = row["ticket__ticket_type"]
+            status = row["status"]
+            response_data[ticket_type][status] = row["count"]
 
         return Response(response_data)
-
 
 class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
